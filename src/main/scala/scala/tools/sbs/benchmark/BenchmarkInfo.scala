@@ -13,6 +13,7 @@ package benchmark
 
 import java.net.URL
 
+import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.HashMap
 import scala.io.Source
 import scala.tools.nsc.io.Path
@@ -20,16 +21,19 @@ import scala.tools.sbs.common.BenchmarkCompiler
 import scala.tools.sbs.io.UI
 
 /** Holds the information of benchmarks before compiling.
- */
+  */
 case class BenchmarkInfo(name: String,
                          src: Path,
                          arguments: List[String],
                          classpathURLs: List[URL],
-                         sampleNumber: Int,
                          timeout: Int,
                          shouldCompile: Boolean) {
 
-  def isCompiledOK(compiler: BenchmarkCompiler, config: Config): Boolean =
+  import BenchmarkBase.Benchmark
+  import BenchmarkBase.Factory
+  import common.BenchmarkCompiler.Compiler
+
+  def isCompiledOK(compiler: Compiler, config: Config): Boolean =
     if (shouldCompile && !(compiler compile this)) {
       UI.error("Compile failed: " + this.name + " src: " + src.path)
       false
@@ -38,7 +42,7 @@ case class BenchmarkInfo(name: String,
       true
     }
 
-  def expand(benchmarkFactory: BenchmarkFactory, config: Config): Benchmark = benchmarkFactory createFrom this
+  def expand(factory: Factory, config: Config): Benchmark = factory createFrom this
 
 }
 
@@ -60,3 +64,54 @@ object BenchmarkInfo {
   }
 
 }
+
+class InfoPack {
+
+  private var modes = ArrayBuffer[InfoMode]()
+
+  def switchMode(mode: BenchmarkMode) = modes :+= new InfoMode(mode)
+
+  def apply(mode: BenchmarkMode) = modes find (_.mode == mode) get
+
+  private def currentMode = modes.last
+
+  def add(newInfo: BenchmarkInfo) = currentMode add newInfo
+
+  def foreach(f: InfoMode => Unit) = modes foreach f
+
+  def filter(f: BenchmarkInfo => Boolean): InfoPack = {
+    val pack = new InfoPack
+    modes foreach (mode => {
+      pack switchMode mode.mode
+      mode.infos filter (f(_)) foreach (pack add _)
+    })
+    pack
+  }
+
+  def filterNot(f: BenchmarkInfo => Boolean): InfoPack = {
+    val pack = new InfoPack
+    modes foreach (mode => {
+      pack switchMode mode.mode
+      mode.infos filterNot (f(_)) foreach (pack add _)
+    })
+    pack
+  }
+
+  def contains(info: BenchmarkInfo) = modes exists (_.infos contains info)
+
+}
+
+class InfoMode(val mode: BenchmarkMode) {
+
+  private var _infos = ArrayBuffer[BenchmarkInfo]()
+
+  def add(newInfo: BenchmarkInfo) = _infos += newInfo
+
+  def infos = _infos
+
+  def foreach(f: BenchmarkInfo => Unit) = infos foreach f
+
+  def map[B](f: BenchmarkInfo => B) = infos map f
+
+}
+

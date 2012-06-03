@@ -43,7 +43,7 @@ trait BenchmarkSpec extends Spec with Meta.StdOpts with Interpolation {
                               "profile"             / "Profiling"                        --> (_modes ::= Profiling)
                               "pinpoint"            / "Pinpointing regression detection" --> (_modes ::= Pinpointing)
                               "all"                 / "run all benchmarking modes"       -->
-                              (_modes = List(SteadyState, StartUpState,MemoryUsage,Profiling,Pinpointing,Instrumenting))
+                              (_modes = List(SteadyState, StartUpState,MemoryUsage,Profiling,Pinpointing))
 
   heading                   ("Statistics metrics:")
   val leastConfidenceLevel = "least-confidence-level" / "smallest acceptable confidence level"     defaultTo 90
@@ -53,47 +53,43 @@ trait BenchmarkSpec extends Spec with Meta.StdOpts with Interpolation {
   val timeout              = "timeout"                / "maximum time for each benchmarking in ms" defaultTo 45000
 
   heading            ("Per-benchmark numbers of performance:")
-  val multiplier    = "multiplier" / "# of times to run per measurement" defaultTo 1
-  val measurement   = "measurement" / "# of measurements"                defaultTo 11
-  val sample        = "sample" / "# of pre-created samples"              defaultTo 0
+  import performance.PerfBenchmark._
+  val multiplier    = multiplierOpt  / "# of times to run per measurement"         defaultTo 1
+  val measurement   = measurementOpt / "# of measurements"                         defaultTo 11
+  val sample        = sampleOpt      / "# of pre-created samples"                  defaultTo 0
   val shouldCompile = !("noncompile" / "not re-compile the benchmarks if set" --?)
 
   heading                        ("Per-benchmark names for profiling:")
-  protected val _profileClasses = "profile-classes" / "classes to be profiled" defaultTo ""
+  import profiling.ProfBenchmark._ 
+  protected val _classes        = classesOpt / "classes to be profiled" defaultTo ""
                                   ""                / ("  split by " + Constant.COLON)
-  protected val _profileExclude = "profile-exclude" / "classes to be ignored" defaultTo ""
+  protected val _exclude        = excludeOpt / "classes to be ignored" defaultTo ""
                                   ""                / ("  split by " + Constant.COLON)
 
-  val profileMethod = "profile-method" / "the method to be profiled" defaultTo ""
-  val profileField  = "profile-field"  / "the field to be profiled" defaultTo ""
+  val methodName    = methodNameOpt    / "name of the method to be studied" defaultTo ""
+  val fieldName     = fieldNameOpt     / "name of the field to be studied"  defaultTo ""
   val shouldGC      = "profile-gc"     / "whether to profile gc's running" --?
   val shouldBoxing  = "profile-boxing" / "whether to profile number of boxing - unboxing" --?
   val shouldStep    = "profile-step"   / "whether to profile number of steps performed" --?
 
   heading             ("Per-benchmark names for pinpointing regression detection:")
-  val pinpointClass  = "pinpoint-class"  / "the insterested class" defaultTo ""
+  val pinpointClass  = "classname"  / "the insterested class"  defaultTo ""
   val pinpointMethod = "pinpoint-method" / "the insterested method" defaultTo ""
 
-  val pinpointBottleneckDectect = "pinpoint-bottleneck" / "whether to detect the bottleneck" --?
+  val pinpointBottleneckDectect = "regression-point" / "whether to find the regression point" --?
 
-  protected val _pinpointPrevious = "pinpoint-previous" / "location of the previous build" defaultTo ""
-                                    ""                  / "  should not be included in classpath"
-  protected val _pinpointExclude  = "pinpoint-exclude"  / "classes to be ignored" defaultTo ""
-                                    ""                  / ("  split by " + Constant.COLON)
-
-  heading                        ("Per-benchmark names for instrumenting:")
-  protected val _instrumentMethods = "instrument-methods" / "methods to be instrumented" defaultTo ""
-                                     ""                   / ("  split by " + Constant.COLON)
+  protected val _previous       = "previous" / "location of the previous build" defaultTo ".previous"
+                                  ""         / "  should not be included in classpath"
 
   heading                          ("Specifying paths and additional values, ~ means sbs root:")
   protected val benchmarkDirPath  = "benchmarkdir"   / "path from ~ to benchmark directory" defaultTo "."
-  protected val binDirPath        = "bindir"         / "path from ~ to benchmark build" defaultTo ""
+  protected val binDirPath        = "bindir"         / "path from ~ to benchmark build"     defaultTo ""
   protected val historyPath       = "history"        / "path to measurement result history" defaultTo benchmarkDirPath
-  protected val classpath         = "classpath"      / "classpath for benchmarks running" defaultTo ""
-  protected val scalaLibPath      = "scala-library"  / "path to scala-library.jar" defaultTo ""
-  protected val scalaCompilerPath = "scala-compiler" / "path to scala-compiler.jar" defaultTo ""
-  val javaOpts                    = "javaopts"       / "flags to java on all runs" defaultToEnv "JAVA_OPTS"
-  val scalacOpts                  = "scalacopts"     / "flags to scalac on all tests" defaultToEnv "SCALAC_OPTS"
+  protected val classpath         = "classpath"      / "classpath for benchmarks running"   defaultTo ""
+  protected val scalaLibPath      = "scala-library"  / "path to scala-library.jar"          defaultTo ""
+  protected val scalaCompilerPath = "scala-compiler" / "path to scala-compiler.jar"         defaultTo ""
+  val javaOpts                    = "javaopts"       / "flags to java on all runs"          defaultToEnv "JAVA_OPTS"
+  val scalacOpts                  = "scalacopts"     / "flags to scalac on all tests"       defaultToEnv "SCALAC_OPTS"
   protected val javaPath          = "java-home"      / "path to java" defaultTo (System getProperty "java.home")
 
   heading        ("Options influencing output:")

@@ -12,120 +12,150 @@ package scala.tools.sbs
 package pinpoint
 
 import java.lang.reflect.Method
-
 import scala.tools.nsc.io.Path.string2path
 import scala.tools.nsc.io.Directory
-import scala.tools.sbs.benchmark.Benchmark
 import scala.tools.sbs.benchmark.BenchmarkInfo
-import scala.tools.sbs.common.Reflector
+import scala.tools.sbs.common.Reflection
 import scala.tools.sbs.io.Log
-import scala.tools.sbs.performance.PerformanceBenchmark
-import scala.tools.sbs.performance.PerformanceBenchmarkFactory
+import scala.tools.sbs.performance.PerfBenchmark
 import scala.tools.sbs.util.Constant
+import scala.testing.Benchmark
+import scala.tools.sbs.profiling.ProfBenchmark
+import scala.tools.nsc.io.Path
+import java.net.URL
 
-trait PinpointBenchmark extends PerformanceBenchmark {
+trait PinpointBenchmark extends PerfBenchmark with ProfBenchmark {
 
-  /** Name of the class to be pinpointing regression detected.
-   */
-  def pinpointClass: String
+  import PinpointBenchamrk.Benchmark
 
-  /** Name of the method to be pinpointing regression detected.
-   */
-  def pinpointMethod: String
+  type subBenchmark <: Benchmark
 
-  /** Names of the classes to be ignored during pinpointing regression detection.
-   */
-  def pinpointExclude: List[String]
+  type subSnippet <: Snippet with subBenchmark
 
-  /** Location of the old class files to be used during pinpointing regression detection.
-   *  Should not be included in `Config.classpathURLs` and `Benchmark.classpathURLs`.
-   */
-  def pinpointPrevious: Directory
+  type subInitializable <: Initializable with subBenchmark
 
-  /** Maximum recursion depth in the process of finding bottleneck.
-   *  Value of -1 is stand for unlimited depth.
-   */
-  def pinpointDepth: Int
+  class Snippet(name: String,
+                arguments: List[String],
+                classpathURLs: List[URL],
+                src: Path,
+                sampleNumber: Int,
+                timeout: Int,
+                multiplier: Int,
+                measurement: Int,
+                val className: String,
+                val methodName: String,
+                val exclude: List[String],
+                val privious: Directory,
+                val depth: Int,
+                method: Method,
+                context: ClassLoader,
+                config: Config)
+    extends super[PerfBenchmark].Snippet(
+      name,
+      arguments,
+      classpathURLs,
+      src,
+      timeout,
+      method,
+      context,
+      config,
+      multiplier,
+      measurement,
+      sampleNumber)
+    with Benchmark
+
+  val classNameOpt = "classname"
+
+  val previousOpt = "previous"
+
+  val depthOpt = "depth"
 
 }
 
-class PinpointBenchmarkFactory(log: Log, config: Config) extends PerformanceBenchmarkFactory(log, config) {
+object PinpointBenchmark extends PinpointBenchmark {
 
-  protected val pinpointClassOpt = "--pinpoint-class"
+  type subBenchmark = Benchmark
 
-  protected val pinpointMethodOpt = "--pinpoint-method"
+  type subSnippet = Snippet
 
-  protected val pinpointPreviousOpt = "--pinpoint-previous"
+  type subInitializable = Initializable
 
-  protected val pinpointExcludeOpt = "--pinpoint-exclude"
+  type subFactory = Factory
 
-  protected val pinpointDepthOpt = "--pinpoint-depth"
+  trait Benchmark extends PerfBenchmark.Benchmark with ProfBenchmark.Benchmark {
 
-  override def createFrom(info: BenchmarkInfo): Benchmark = {
-    val argMap = BenchmarkInfo.readInfo(
-      info.src,
-      List(
+    def classes: List[String] = Nil
+
+    def className: String
+
+    /** Location of the old class files to be used during pinpointing regression detection.
+      * Should not be included in `Config.classpathURLs` and `Benchmark.classpathURLs`.
+      */
+    def previous: Directory
+
+    /** Maximum recursion depth in the process of finding bottleneck.
+      * Value of -1 is stand for unlimited depth.
+      */
+    def depth: Int
+
+  }
+
+  def factory(log: Log, config: Config) = new Factory with Configured {
+
+    val log: Log = log
+
+    val config: Config = config
+
+    def createFrom(info: BenchmarkInfo): Benchmark = {
+      val argMap = BenchmarkInfo.readInfo(info.src, List(
+        classNameOpt,
+        methodNameOpt,
+        fieldNameOpt,
+        excludeOpt,
         multiplierOpt,
         measurementOpt,
-        pinpointClassOpt,
-        pinpointMethodOpt,
-        pinpointExcludeOpt,
-        pinpointPreviousOpt,
-        pinpointDepthOpt))
-    val multiplier = argMap get multiplierOpt match {
-      case Some(arg) => arg.toInt
-      case _         => config.multiplier
+        sampleOpt,
+        previousOpt,
+        depthOpt))
+      val className = argMap get classNameOpt match {
+        case Some(arg) => arg split Constant.COLON toList
+        case _         => config.className
+      }
+      val exclude = argMap get excludeOpt match {
+        case Some(arg) => arg split Constant.COLON toList
+        case _         => config.exclude
+      }
+      val methodName = argMap getOrElse (methodNameOpt, config.methodName)
+      val fieldName = argMap getOrElse (fieldNameOpt, config.fieldName)
+      val multiplier = getIntoOrElse(argMap get multiplierOpt, stringToInt, config.multiplier)
+      val measurement = getIntoOrElse(argMap get measurementOpt, stringToInt, config.measurement)
+      val sampleNumber = getIntoOrElse(argMap get sampleOpt, stringToInt, 0)
+      load(
+        info,
+        (method: Method, context: ClassLoader) => new Snippet(
+          info.name,
+          info.arguments,
+          info.classpathURLs,
+          info.src,
+          info.timeout,
+          className,
+          exclude,
+          methodName,
+          fieldName,
+          method,
+          context,
+          config),
+        (context: ClassLoader) => new Initializable(
+          info.name,
+          info.classpathURLs,
+          info.src,
+          Reflection(config, log).getObject[PinpointBenchmarkTemplate](
+            info.name, config.classpathURLs ++ info.classpathURLs),
+          context,
+          config),
+        classOf[PinpointBenchmarkTemplate].getName)
     }
-    val measurement = argMap get measurementOpt match {
-      case Some(arg) => arg.toInt
-      case _         => config.measurement
-    }
-    val pinpointClass = argMap get pinpointClassOpt match {
-      case Some(arg) => arg
-      case _         => config.pinpointClass
-    }
-    val pinpointMethod = argMap get pinpointMethodOpt match {
-      case Some(arg) => arg
-      case _         => config.pinpointMethod
-    }
-    val pinpointExclude = argMap get pinpointExcludeOpt match {
-      case Some(arg) => arg split Constant.COLON toList
-      case _         => config.pinpointExclude
-    }
-    val pinpointPrevious = argMap get pinpointPreviousOpt match {
-      case Some(arg) => Directory(arg)
-      case _         => config.pinpointPrevious
-    }
-    val pinpointDepth = argMap get pinpointPreviousOpt match {
-      case Some(arg) => arg.toInt
-      case _         => -1
-    }
-    load(
-      info,
-      (method: Method, context: ClassLoader) => new PinpointBenchmarkSnippet(
-        info.name,
-        info.arguments,
-        info.classpathURLs,
-        info.src,
-        info.sampleNumber,
-        info.timeout,
-        multiplier,
-        measurement,
-        pinpointClass,
-        pinpointMethod,
-        pinpointExclude,
-        pinpointPrevious,
-        pinpointDepth,
-        method,
-        context,
-        config),
-      (context: ClassLoader) => new PinpointBenchmarkInitializable(
-        info.name,
-        info.classpathURLs,
-        info.src,
-        Reflector(config, log).getObject[PinpointBenchmarkTemplate](info.name, config.classpathURLs ++ info.classpathURLs),
-        context,
-        config))
+
   }
 
 }

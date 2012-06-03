@@ -13,12 +13,14 @@ package profiling
 
 import scala.collection.mutable.ArrayBuffer
 
+import ProfBenchmark.Benchmark
+
 /** A {@link RunResult} from a running of {@link Runner}.
  *  In the mean time, also a {@link BenchmarkResult} for reporting.
  */
 trait ProfilingResult extends BenchmarkResult
 
-case class ProfilingSuccess(benchmark: ProfilingBenchmark, profile: Profile)
+case class ProfilingSuccess(benchmark: Benchmark, profile: Profile)
   extends BenchmarkSuccess with ProfilingResult {
 
   def benchmarkName = benchmark.name
@@ -34,7 +36,7 @@ case class ProfilingSuccess(benchmark: ProfilingBenchmark, profile: Profile)
 
 trait ProfilingFailure extends BenchmarkFailure with ProfilingResult
 
-class ProfilingException(_benchmark: ProfilingBenchmark, exception: Exception)
+class ProfilingException(_benchmark: Benchmark, exception: Exception)
   extends ExceptionBenchmarkFailure(_benchmark.name, exception)
   with ProfilingFailure {
 
@@ -44,9 +46,9 @@ class ProfilingException(_benchmark: ProfilingBenchmark, exception: Exception)
 
 object ProfilingException {
 
-  def apply(benchmark: ProfilingBenchmark, exception: Exception) = new ProfilingException(benchmark, exception)
+  def apply(benchmark: Benchmark, exception: Exception) = new ProfilingException(benchmark, exception)
 
-  def unapply(pe: ProfilingException): Option[(ProfilingBenchmark, Exception)] =
+  def unapply(pe: ProfilingException): Option[(Benchmark, Exception)] =
     Some((pe.benchmark, pe.exception))
 
 }

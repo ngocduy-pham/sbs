@@ -13,7 +13,7 @@ package performance
 
 import scala.compat.Platform
 import scala.sys.process.Process
-import scala.tools.sbs.common.JVMInvokerFactory
+import scala.tools.sbs.common.JVMInvoker
 import scala.tools.sbs.io.Log
 
 /** Measurer for benchmarking on startup state.
@@ -22,10 +22,10 @@ class StartupHarness(val log: Log, val config: Config) extends Measurer {
 
   override protected val mode: BenchmarkMode = StartUpState
 
-  def measure(benchmark: PerformanceBenchmark): MeasurementResult = {
+  def measure(benchmark: PerfBenchmark.Benchmark): MeasurementResult = {
     log.info("[Benchmarking startup state]")
 
-    val command = JVMInvokerFactory(log, config).command(benchmark, config.classpathURLs ++ benchmark.classpathURLs)
+    val command = JVMInvoker(log, config).command(benchmark, config.classpathURLs ++ benchmark.classpathURLs)
     val process = Process(command)
     val exitValue = process !
 

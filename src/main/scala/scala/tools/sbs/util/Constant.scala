@@ -12,8 +12,10 @@ package scala.tools.sbs
 package util
 
 /** Utilities for benchmarking.
- */
+  */
 object Constant {
+
+  val ARG = "--"
 
   val COLON = System getProperty "path.separator"
 

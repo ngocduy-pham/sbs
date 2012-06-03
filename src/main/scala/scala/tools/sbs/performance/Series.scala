@@ -13,7 +13,6 @@ package performance
 
 import scala.collection.mutable.ArrayBuffer
 import scala.tools.sbs.io.Log
-import scala.tools.sbs.performance.regression.StatisticsFactory
 import scala.tools.sbs.util.Constant.ENDL
 
 /** Class represents the result of a success measurement.
@@ -80,7 +79,7 @@ class Series(config: Config, log: Log) {
       false
     }
     else {
-      val statistic = StatisticsFactory(config, log)
+      val statistic = Statistics(config, log)
 
       val mean = statistic mean this
       var (left, right) = statistic confidenceInterval this

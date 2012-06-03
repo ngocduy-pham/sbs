@@ -24,7 +24,7 @@ import scala.tools.sbs.util.FileUtil
 import org.apache.commons.math.MathException
 
 /** Configurations for sbs running.
- */
+  */
 case class Config(args: Array[String])
   extends { val parsed = BenchmarkSpec(args: _*) } with BenchmarkSpec with Instance {
 
@@ -33,7 +33,7 @@ case class Config(args: Array[String])
   val precisionThreshold = _precisionThreshold / 100D
 
   /** cwd where benchmarking taking place, also the sources directory for all benchmarks.
-   */
+    */
   val benchmarkDirectory = FileUtil.mkDir(Directory(benchmarkDirPath).toCanonical) match {
     case Left(dir) => dir
     case Right(s) => {
@@ -44,7 +44,7 @@ case class Config(args: Array[String])
   }
 
   /** All benchmark compiled output are here, also contains not-compiled-benchmarks.
-   */
+    */
   val bin = if (binDirPath == "") {
     FileUtil.mkDir((benchmarkDirectory / "bin").toCanonical) match {
       case Left(dir) => dir
@@ -65,14 +65,14 @@ case class Config(args: Array[String])
   }
 
   /** Contains measurement histories from previous runnings. Layout:
-   *  here (history)/
-   *                steady/
-   *                      benchmark/
-   *                               steady state history files
-   *                               ...
-   *                memory/
-   *                       ....
-   */
+    * here (history)/
+    *         steady/
+    *               benchmark/
+    *                        steady state history files
+    *                        ...
+    *         memory/
+    *                ....
+    */
   val history = FileUtil.mkDir(Path(historyPath).toCanonical) match {
     case Left(dir) => dir
     case Right(s) => {
@@ -81,40 +81,39 @@ case class Config(args: Array[String])
     }
   }
 
-  val profileExclude =
-    if (_profileExclude == "") List("java.*", "javax.*", "sun.*", "com.sun.*", "org.apache.common.math.*")
-    else if (_profileExclude equals "none") Nil
-    else (_profileExclude split Constant.COLON) toList
+  /** List of names of the classes to be profiled.
+    * Stored in config in case more than one benchmarks are specified.
+    */
+  val classes = (_classes split Constant.COLON) toList
 
-  val profileClasses = (_profileClasses split Constant.COLON) toList
+  /** List of patterns of the names of the classes to be profiled.
+    * Stored in config in case more than one benchmarks are specified.
+    */
+  val exclude =
+    if (_exclude == "") List("java.*", "javax.*", "sun.*", "com.sun.*", "org.apache.common.math.*")
+    else if (_exclude equals "none") Nil
+    else (_exclude split Constant.COLON) toList
 
-  val instrumentMethods = (_instrumentMethods split Constant.COLON) toList
-
-  val pinpointExclude =
-    if (_pinpointExclude == "") List("java.*", "javax.*", "sun.*", "com.sun.*", "org.apache.common.math.*")
-    else if (_pinpointExclude == "none") Nil
-    else (_pinpointExclude split Constant.COLON) toList
-
-  val pinpointPrevious = Directory(
-    if (_pinpointPrevious == "") ".pinpointprevious"
-    else _pinpointPrevious)
+  /** Location of the previous benchmark build.
+    */
+  val previous = Directory(_previous)
 
   /** `List` of {@link BenchmarkMode}. May include:
-   *  <ul>
-   *  <li>Benchmarking in startup state
-   *  <li>Benchmarking in steady state
-   *  <li>Measuring memory usage
-   *  <li>Profiling
-   *  </ul>
-   */
+    * <ul>
+    * <li>Benchmarking in startup state
+    * <li>Benchmarking in steady state
+    * <li>Measuring memory usage
+    * <li>Profiling
+    * </ul>
+    */
   val modes = _modes
 
   /** `File` path of scala-library.jar.
-   */
+    */
   val scalaLibraryJar = getJar(scalaLibPath, "scala-library.jar")
 
   /** `File` path of scala-compiler.jar.
-   */
+    */
   val scalaCompilerJar = getJar(scalaCompilerPath, "scala-compiler.jar")
 
   private def getJar(path: String, name: String): File = {
@@ -143,7 +142,7 @@ case class Config(args: Array[String])
   }
 
   /** Common classpath URLs for every benchmarks.
-   */
+    */
   val classpathURLs =
     List(
       scalaLibraryJar.toURL,
@@ -160,7 +159,7 @@ case class Config(args: Array[String])
   val javaProp = "-Dscala.home=" + scalaLibraryJar.parent.parent.path
 
   /** Scala-library.jar and scala-compiler.jar in form of classpath.
-   */
+    */
   val scalaLib = scalaLibraryJar.path + COLON + scalaCompilerJar
 
   override def toString(): String = {

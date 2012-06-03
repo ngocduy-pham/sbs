@@ -12,18 +12,13 @@ package scala.tools.sbs
 package pinpoint
 
 import scala.tools.nsc.io.Directory
-import scala.tools.sbs.performance.PerformanceBenchmarkTemplate
+import scala.tools.sbs.profiling.ProfBenchmarkTemplate
+import scala.tools.sbs.performance.PerfBenchmarkTemplate
 
-trait PinpointBenchmarkTemplate extends PerformanceBenchmarkTemplate {
+trait PinpointBenchmarkTemplate extends PerfBenchmarkTemplate with ProfBenchmarkTemplate {
 
-  val pinpointClass = ""
+  val previous = Directory(".pinpointprevious")
 
-  val pinpointMethod = ""
-
-  val pinpointExclude: List[String] = Nil
-
-  val pinpointPrevious = Directory(".pinpointprevious")
-
-  val pinpointDepth = -1
+  val depth = -1
 
 }

@@ -25,7 +25,7 @@ class SeriesAchiever(config: Config, log: Log) {
    *
    *  @return	The result if success, otherwies a `String` describes the reason.
    */
-  def achieve(benchmark: PerformanceBenchmark,
+  def achieve(benchmark: PerfBenchmark.Benchmark,
           checkWarm: Series => Boolean,
           measure: () => Long,
           newlyAchieve: Boolean = true): MeasurementResult = {

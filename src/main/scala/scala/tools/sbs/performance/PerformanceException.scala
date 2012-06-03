@@ -11,12 +11,14 @@
 package scala.tools.sbs
 package performance
 
+import PerfBenchmark.Benchmark
+
 class PerformanceException(message: String) extends BenchmarkException(message)
 
-case class NoPreviousException(benchmark: PerformanceBenchmark, mode: BenchmarkMode, result: RunSuccess)
+case class NoPreviousException(benchmark: Benchmark, mode: BenchmarkMode, result: RunSuccess)
   extends PerformanceException("No previous run result to detect regression")
 
-case class BenchmarkProcessException(benchmark: PerformanceBenchmark, mode: BenchmarkMode, exitValue: Int)
+case class BenchmarkProcessException(benchmark: Benchmark, mode: BenchmarkMode, exitValue: Int)
   extends PerformanceException("Error in benchmark process exit value: " + exitValue)
 
 case class MalformedXMLException(runner: Runner, mode: BenchmarkMode, xml: scala.xml.Elem)

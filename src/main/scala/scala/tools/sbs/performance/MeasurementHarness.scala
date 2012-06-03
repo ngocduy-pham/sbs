@@ -11,7 +11,7 @@
 package scala.tools.sbs
 package performance
 
-import scala.tools.sbs.benchmark.Benchmark
+import scala.tools.sbs.benchmark.BenchmarkBase
 import scala.tools.sbs.benchmark.BenchmarkFactory
 import scala.tools.sbs.common.ObjectHarness
 import scala.tools.sbs.common.RuntimeTypeChecker
@@ -22,7 +22,7 @@ import scala.xml.XML
 /** Driver for measurement in a separated JVM.
  *  Choose the harness to run and write the result to output stream.
  */
-trait MeasurementHarness[BenchmarkType <: Benchmark] extends ObjectHarness with RuntimeTypeChecker {
+trait MeasurementHarness[BenchmarkType <: BenchmarkBase.Benchmark] extends ObjectHarness with RuntimeTypeChecker {
 
   protected var log: Log = null
   protected var seriesAchiever: SeriesAchiever = null

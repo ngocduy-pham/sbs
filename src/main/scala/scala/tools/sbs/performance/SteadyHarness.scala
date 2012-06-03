@@ -12,18 +12,17 @@ package scala.tools.sbs
 package performance
 
 import scala.compat.Platform
-import scala.tools.sbs.performance.regression.StatisticsFactory
 
 /** Measurer for benchmarking on steady state. Should be run on a clean new JVM.
  */
-object SteadyHarness extends MeasurementHarness[PerformanceBenchmark] {
+object SteadyHarness extends MeasurementHarness[PerfBenchmark.Benchmark] {
 
   protected val mode = SteadyState
 
-  protected val upperBound = manifest[PerformanceBenchmark]
+  protected val upperBound = manifest[PerfBenchmark.Benchmark]
 
-  def measure(benchmark: PerformanceBenchmark): MeasurementResult = {
-    val statistic = StatisticsFactory(config, log)
+  def measure(benchmark: PerfBenchmark.Benchmark): MeasurementResult = {
+    val statistic = Statistics(config, log)
     log.info("[Benchmarking steady state]")
     seriesAchiever achieve (
       benchmark,

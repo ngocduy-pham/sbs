@@ -15,7 +15,7 @@ import java.io.IOException
 import java.util.{ Map => JMap }
 
 import scala.collection.JavaConverters.asScalaBufferConverter
-import scala.tools.sbs.common.JVMInvokerFactory
+import scala.tools.sbs.common.JVMInvoker
 import scala.tools.sbs.io.Log
 
 import com.sun.jdi.connect.Connector
@@ -24,12 +24,12 @@ import com.sun.jdi.Bootstrap
 import com.sun.jdi.VirtualMachine
 
 /** Java Debug Interface based implement of {@link Profiler}.
- */
+  */
 class JDIProfiler(val config: Config, val log: Log) extends Profiler {
 
-  protected def profile(benchmark: ProfilingBenchmark): ProfilingResult = {
+  protected def profile(benchmark: ProfBenchmark.Benchmark): ProfilingResult = {
     val javaArgument =
-      JVMInvokerFactory(log, config).asJavaArgument(benchmark, config.classpathURLs ++ benchmark.classpathURLs)
+      JVMInvoker(log, config).asJavaArgument(benchmark, config.classpathURLs ++ benchmark.classpathURLs)
 
     log.debug("Profile command: " + (javaArgument mkString " "))
 
@@ -43,18 +43,16 @@ class JDIProfiler(val config: Config, val log: Log) extends Profiler {
     }
 
     try {
-      val profile =
-        if ((benchmark.profileMethod == "") &&
-          (benchmark.profileField == "") &&
-          !config.shouldGC &&
-          !config.shouldBoxing) {
-          new JDIEventHandler(log, config, benchmark) process jvm
-        }
-        else {
-          new Profile
-        }
+      val profile = if ((benchmark.methodName == "") &&
+        (benchmark.fieldName == "") &&
+        !config.shouldGC &&
+        !config.shouldBoxing) {
+        new JDIEventHandler(log, config, benchmark) process jvm
+      }
+      else {
+        new Profile
+      }
       if (config.shouldGC) {
-
         new MemoryProfiler(log, config).profile(benchmark, profile)
       }
       else {
@@ -68,7 +66,7 @@ class JDIProfiler(val config: Config, val log: Log) extends Profiler {
   }
 
   /** Launch target VM. Forward target's output and error.
-   */
+    */
   private def launchTarget(mainArgs: String): VirtualMachine = {
     val connector =
       Bootstrap.virtualMachineManager.allConnectors.asScala.toSeq find (
@@ -81,7 +79,7 @@ class JDIProfiler(val config: Config, val log: Log) extends Profiler {
   }
 
   /** Return the launching connector's arguments.
-   */
+    */
   private def connectorArguments(connector: LaunchingConnector, mainArgs: String): JMap[String, Connector.Argument] = {
     val arguments = connector.defaultArguments
 

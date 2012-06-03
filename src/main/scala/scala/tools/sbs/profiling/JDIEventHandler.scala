@@ -36,9 +36,11 @@ import com.sun.jdi.ThreadReference
 import com.sun.jdi.VMDisconnectedException
 import com.sun.jdi.VirtualMachine
 
+import ProfBenchmark.Benchmark
+
 /** Handles JDI events.
  */
-class JDIEventHandler(log: Log, config: Config, benchmark: ProfilingBenchmark) {
+class JDIEventHandler(log: Log, config: Config, benchmark: Benchmark) {
 
   /** Connected to target JVM.
    */
@@ -91,9 +93,9 @@ class JDIEventHandler(log: Log, config: Config, benchmark: ProfilingBenchmark) {
     tdr setSuspendPolicy EventRequest.SUSPEND_ALL
     tdr enable
 
-    benchmark.profileClasses foreach (pattern => {
+    benchmark.classes foreach (pattern => {
       val cpr = mgr.createClassPrepareRequest
-      benchmark.profileExclude foreach (cpr addClassExclusionFilter _)
+      benchmark.exclude foreach (cpr addClassExclusionFilter _)
       cpr addClassFilter pattern
       cpr setSuspendPolicy EventRequest.SUSPEND_ALL
       cpr enable
@@ -149,7 +151,7 @@ class JDIEventHandler(log: Log, config: Config, benchmark: ProfilingBenchmark) {
       val mgr = jvm.eventRequestManager
 
       // Add watchpoint requests
-      event.referenceType.visibleFields.asScala.toSeq find (_.name == benchmark.profileField) match {
+      event.referenceType.visibleFields.asScala.toSeq find (_.name == benchmark.fieldName) match {
         case Some(field) => {
           val mwrReq = mgr createModificationWatchpointRequest field
           mwrReq setSuspendPolicy EventRequest.SUSPEND_NONE
@@ -166,7 +168,7 @@ class JDIEventHandler(log: Log, config: Config, benchmark: ProfilingBenchmark) {
       if (config.shouldStep) {
         try {
           val str = mgr.createStepRequest(event.thread, StepRequest.STEP_MIN, StepRequest.STEP_INTO)
-          benchmark.profileExclude foreach (str addClassExclusionFilter _)
+          benchmark.exclude foreach (str addClassExclusionFilter _)
           str setSuspendPolicy EventRequest.SUSPEND_NONE
           str enable
         }

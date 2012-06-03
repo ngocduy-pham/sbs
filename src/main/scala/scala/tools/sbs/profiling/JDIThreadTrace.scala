@@ -23,26 +23,28 @@ import com.sun.jdi.event.ThreadDeathEvent
 import com.sun.jdi.ThreadReference
 import com.sun.jdi.VirtualMachine
 
+import ProfBenchmark.Benchmark
+
 /** This class keeps context on events in one thread.
- */
+  */
 class JDIThreadTrace(
-  log: Log, profile: Profile, benchmark: ProfilingBenchmark, thread: ThreadReference, jvm: VirtualMachine) {
+  log: Log, profile: Profile, benchmark: Benchmark, thread: ThreadReference, jvm: VirtualMachine) {
 
   /** Instruction steps of methods in call stack.
-   */
+    */
   private var steps = Stack[Int]()
 
   /** Convert the `com.sun.jdi.Method` name into the format of <name>.<argument types>.<return type>
-   */
+    */
   private def wrapName(method: com.sun.jdi.Method) =
     method.declaringType.name + "." + method.name + method.signature
 
   /** Push new method on the call stack.
-   */
+    */
   def methodEntryEvent(event: MethodEntryEvent) {
     log.verbose(wrapName(event.method))
     steps push 0
-    if (event.method().name() equals benchmark.profileMethod) {
+    if (event.method().name() equals benchmark.methodName) {
       profile
     }
     if (event.method.name contains "box") {
@@ -54,9 +56,9 @@ class JDIThreadTrace(
   }
 
   /** Tries to update the method's invocation in profile.
-   *  Adds the method and/or its declaring class into profile
-   *  if not existed in.
-   */
+    * Adds the method and/or its declaring class into profile
+    * if not existed in.
+    */
   def methodExitEvent(event: MethodExitEvent) {
     if (!steps.isEmpty) {
       profile.classes find (_.name equals event.method.declaringType.name) match {
@@ -84,7 +86,7 @@ class JDIThreadTrace(
   }
 
   /** Actually do the accessing and/or modifying.
-   */
+    */
   private def accessOrModify(event: com.sun.jdi.event.WatchpointEvent) {
     profile.classes find (_.name equals event.field.declaringType.name) match {
       case Some(clazz) => {
@@ -118,15 +120,15 @@ class JDIThreadTrace(
   }
 
   /** Tries to update the field's accessing times in profile.
-   *  Adds the field and/or its declaring class into profile
-   *  if not existed in.
-   */
+    * Adds the field and/or its declaring class into profile
+    * if not existed in.
+    */
   def fieldAccessEvent(event: AccessWatchpointEvent) = accessOrModify(event)
 
   /** Tries to update the field's modifying times in profile.
-   *  Adds the field and/or its declaring class into profile
-   *  if not existed in.
-   */
+    * Adds the field and/or its declaring class into profile
+    * if not existed in.
+    */
   def fieldModifyEvent(event: ModificationWatchpointEvent) = accessOrModify(event)
 
   def exceptionEvent(event: ExceptionEvent) {

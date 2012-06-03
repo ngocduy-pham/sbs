@@ -13,15 +13,17 @@ package performance
 
 import java.lang.Runtime
 
+import PerfBenchmark.Benchmark
+
 /** Measurer for benchmarking on memory usage. Should be run on a clean new JVM.
- */
-object MemoryHarness extends MeasurementHarness[PerformanceBenchmark] {
+  */
+object MemoryHarness extends MeasurementHarness[Benchmark] {
 
   protected val mode = MemoryUsage
 
-  protected val upperBound = manifest[PerformanceBenchmark]
+  protected val upperBound = manifest[Benchmark]
 
-  def measure(benchmark: PerformanceBenchmark): MeasurementResult = {
+  def measure(benchmark: Benchmark): MeasurementResult = {
     log.info("[Benchmarking memory consumption]")
     val runtime: Runtime = Runtime.getRuntime
     seriesAchiever achieve (

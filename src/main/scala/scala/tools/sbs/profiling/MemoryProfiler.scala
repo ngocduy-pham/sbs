@@ -11,13 +11,15 @@
 package scala.tools.sbs
 package profiling
 
-import scala.tools.sbs.common.JVMInvokerFactory
+import scala.tools.sbs.common.JVMInvoker
 import scala.tools.sbs.io.Log
+
+import ProfBenchmark.Benchmark
 
 class MemoryProfiler(log: Log, config: Config) {
 
-  def profile(benchmark: ProfilingBenchmark, profile: Profile): ProfilingResult = {
-    val invoker = JVMInvokerFactory(log, config)
+  def profile(benchmark: Benchmark, profile: Profile): ProfilingResult = {
+    val invoker = JVMInvoker(log, config)
     val (result, error) = invoker.invoke(
       invoker.command(GCHarness, benchmark, config.classpathURLs ++ benchmark.classpathURLs),
       line => try scala.xml.XML loadString line catch { case _ => log(line); null },
@@ -34,11 +36,11 @@ class MemoryProfiler(log: Log, config: Config) {
   }
 
   /** Disposes a xml string to get the {@link scala.tools.sbs.profiling.MemoryActivity} it represents.
-   *
-   *  @param result	A `String` contains and xml element.
-   *
-   *  @return	The corresponding `MemoryActivity`
-   */
+    *
+    * @param result	A `String` contains and xml element.
+    *
+    * @return	The corresponding `MemoryActivity`
+    */
   def dispose(result: scala.xml.Elem): MemoryActivity = try {
     val xml = scala.xml.Utility trim result
     val heapNode = xml \\ "heap"

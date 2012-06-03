@@ -14,8 +14,8 @@ package performance
 import java.net.URL
 
 import scala.collection.mutable.ArrayBuffer
-import scala.tools.sbs.benchmark.Benchmark
-import scala.tools.sbs.common.JVMInvokerFactory
+import scala.tools.sbs.benchmark.BenchmarkBase.Benchmark
+import scala.tools.sbs.common.JVMInvoker
 import scala.tools.sbs.io.Log
 
 /** Measures benchmark metric by invoking a new clean JVM.
@@ -28,15 +28,15 @@ class SubJVMMeasurer(val log: Log,
 
   /** Measures with default classpath as `config.classpathURLs ++ benchmark.classpathURLs`.
    */
-  def measure(benchmark: PerformanceBenchmark): MeasurementResult =
+  def measure(benchmark: Benchmark): MeasurementResult =
     measure(benchmark, config.classpathURLs ++ benchmark.classpathURLs)
 
   /** Lauches a new process with a {@link MeasurementHarness} runs a
    *  {@link scala.tools.sbs.performance.PerformanceBenchmark}.
    *  User classes will be loaded from the given `classpathURLs`.
    */
-  def measure(benchmark: PerformanceBenchmark, classpathURLs: List[URL]): MeasurementResult = {
-    val invoker = JVMInvokerFactory(log, config)
+  def measure(benchmark: Benchmark, classpathURLs: List[URL]): MeasurementResult = {
+    val invoker = JVMInvoker(log, config)
     val (result, error) = invoker.invoke(
       invoker.command(measurementHarness, benchmark, classpathURLs),
       line => try scala.xml.XML loadString line

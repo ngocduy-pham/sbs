@@ -85,9 +85,6 @@ object ArgumentParser {
           val readCP = (line split " ")(1) split COLON map (Path(_).toCanonical.toURL)
           classpathURLs = (readCP.toList ++ config.classpathURLs).distinct
         }
-        else if (line startsWith "--sample") {
-          sample = (line split " ")(1).toInt
-        }
         else if (line startsWith "--timeout") {
           timeout = (line split " ")(1).toInt
         }
@@ -112,7 +109,6 @@ object ArgumentParser {
       src,
       args,
       classpathURLs,
-      sample,
       timeout,
       shouldCompile)
   }

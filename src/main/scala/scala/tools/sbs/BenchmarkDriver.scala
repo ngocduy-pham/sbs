@@ -14,27 +14,27 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 import scala.tools.nsc.io.Path.string2path
-import scala.tools.sbs.common.BenchmarkCompilerFactory
+import scala.tools.sbs.common.BenchmarkCompiler
 import scala.tools.sbs.io.ReportFactory
 import scala.tools.sbs.io.UI
 import scala.tools.sbs.util.FileUtil
 
 /** Object controls the runtime of benchmark classes to do measurements.
- *
- *  @author ND P
- */
+  *
+  * @author ND P
+  */
 object BenchmarkDriver {
 
   /** Start point of the benchmark driver.
-   *  Does the following:
-   *  <ul>
-   *  <li>Parse input parameters
-   *  <li>Compile the sources of the benchmarks if necessary
-   *  <li>Run all the benchmarks with the specified parameters
-   *  <li>Run comparisons to previous results
-   *  <li>Stores the benchmark result into file
-   *  </ul>
-   */
+    * Does the following:
+    * <ul>
+    * <li>Parse input parameters
+    * <li>Compile the sources of the benchmarks if necessary
+    * <li>Run all the benchmarks with the specified parameters
+    * <li>Run comparisons to previous results
+    * <li>Stores the benchmark result into file
+    * </ul>
+    */
   def main(args: Array[String]): Unit = try {
 
     val (config, log, benchmarkInfos) = ArgumentParser parse args
@@ -54,7 +54,7 @@ object BenchmarkDriver {
     val resultPack = new ResultPack()
 
     log.info("[Compiling benchmarks]")
-    val compiler = BenchmarkCompilerFactory(log, config)
+    val compiler = BenchmarkCompiler(log, config)
 
     val compiled = benchmarkInfos filter (_.isCompiledOK(compiler, config))
 
@@ -84,7 +84,7 @@ object BenchmarkDriver {
       val benchmarks = compiled(mode) map (info =>
         try info.expand(runner.benchmarkFactory, config)
         catch {
-          case e @ (_: ClassNotFoundException | _: ClassCastException) => {
+          case e@(_: ClassNotFoundException | _: ClassCastException) => {
             log.error(e.toString)
             null
           }
@@ -92,15 +92,15 @@ object BenchmarkDriver {
 
       log.info("[Expanding completed]")
 
-      log.info("[Generating sample histories]")
+      /*log.info("[Generating sample histories]")
       try benchmarks filter (_.sampleNumber > 0) foreach (runner generate _)
       catch {
         case e => log.debug(e.toString)
-      }
+      }*/
 
       // Benchmarking
       log.info("[Start benchmarking]")
-      benchmarks filter (_.sampleNumber == 0) foreach (benchmark => {
+      benchmarks /*filter (_.sampleNumber == 0)*/ foreach (benchmark => {
 
         log.info("Benchmark: " + benchmark.name)
         log.debug("Benchmark: " + benchmark.getClass.getName)

@@ -11,7 +11,7 @@
 package scala.tools.sbs
 package performance
 
-import scala.tools.sbs.benchmark.Benchmark
+import scala.tools.sbs.benchmark.BenchmarkBase
 
 /** Represents a result of a measurement phase of one benchmark on one {@link BenchmarkMode}.
  */
@@ -60,7 +60,7 @@ case class ProcessMeasurementFailure(exitValue: Int) extends MeasurementFailure 
 
 }
 
-case class UnsupportedBenchmarkMeasurementFailure(benchmark: Benchmark, mode: BenchmarkMode)
+case class UnsupportedBenchmarkMeasurementFailure(benchmark: BenchmarkBase.Benchmark, mode: BenchmarkMode)
   extends MeasurementFailure {
 
   def reason = "Benchmark " + benchmark.name + " unsupports benchmarking mode: " + mode.description
