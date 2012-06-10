@@ -24,7 +24,6 @@ abstract class RegressionSuccess(benchmark: Benchmark)
   with BenchmarkSuccess {
 
   def confidenceLevel: Int
-
   def benchmarkName = benchmark.name
 
 }
@@ -32,7 +31,6 @@ abstract class RegressionSuccess(benchmark: Benchmark)
 trait RegressionDetected {
 
   def current: (Double, Double)
-
   def previous: ArrayBuffer[(Double, Double)]
 
   def toReport = ArrayBuffer(
@@ -56,11 +54,8 @@ trait CIRegression extends RegressionDetected {
 trait ANOVARegression extends RegressionDetected {
 
   def SSA: Double
-
   def SSE: Double
-
   def FValue: Double
-
   def F: Double
 
   override def toReport =
@@ -98,8 +93,7 @@ case class NoPreviousMeasurement(benchmark: Benchmark, measurementSuccess: Measu
   extends RegressionResult with BenchmarkSuccess {
 
   def benchmarkName = benchmark.name
-
-  def toReport = ArrayBuffer(Constant.INDENT + "No previous measurement result to detect regression")
+  def toReport      = ArrayBuffer(Constant.INDENT + "No previous measurement result to detect regression")
 
 }
 

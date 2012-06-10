@@ -153,9 +153,7 @@ case class Config(args: Array[String])
       ((classpath split COLON).toList map (Path(_).toCanonical.toURL)) distinct
 
   val javahome = Directory(javaPath)
-
-  val javacmd = javaPath + SLASH + "bin" + SLASH + "java"
-
+  val javacmd  = javaPath + SLASH + "bin" + SLASH + "java"
   val javaProp = "-Dscala.home=" + scalaLibraryJar.parent.parent.path
 
   /** Scala-library.jar and scala-compiler.jar in form of classpath.

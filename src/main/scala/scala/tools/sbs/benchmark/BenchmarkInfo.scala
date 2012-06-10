@@ -66,16 +66,12 @@ object BenchmarkInfo {
 
 class InfoPack {
 
-  private var modes = ArrayBuffer[InfoMode]()
-
-  def switchMode(mode: Mode) = modes :+= new InfoMode(mode)
-
-  def apply(mode: Mode) = modes find (_.mode == mode) get
-
+  private var modes       = ArrayBuffer[InfoMode]()
   private def currentMode = modes.last
 
-  def add(newInfo: BenchmarkInfo) = currentMode add newInfo
-
+  def switchMode(mode: Mode)       = modes :+= new InfoMode(mode)
+  def apply(mode: Mode)            = modes find (_.mode == mode) get
+  def add(newInfo: BenchmarkInfo)  = currentMode add newInfo
   def foreach(f: InfoMode => Unit) = modes foreach f
 
   def filter(f: BenchmarkInfo => Boolean): InfoPack = {
@@ -104,13 +100,9 @@ class InfoMode(val mode: Mode) {
 
   private var _infos = ArrayBuffer[BenchmarkInfo]()
 
-  def add(newInfo: BenchmarkInfo) = _infos += newInfo
-
-  def infos = _infos
-
+  def add(newInfo: BenchmarkInfo)       = _infos += newInfo
+  def infos                             = _infos
   def foreach(f: BenchmarkInfo => Unit) = infos foreach f
-
-  def map[B](f: BenchmarkInfo => B) = infos map f
+  def map[B](f: BenchmarkInfo => B)     = infos map f
 
 }
-

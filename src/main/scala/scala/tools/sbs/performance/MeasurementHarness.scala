@@ -24,9 +24,9 @@ import scala.xml.XML
  */
 trait MeasurementHarness[SubBenchmark <: BenchmarkBase.Benchmark] extends ObjectHarness with RuntimeTypeChecker {
 
-  protected var log: Log = null
+  protected var log: Log                       = null
   protected var seriesAchiever: SeriesAchiever = null
-  protected var config: Config = null
+  protected var config: Config                 = null
   protected def mode: Mode
 
   /** Entry point of the new process.

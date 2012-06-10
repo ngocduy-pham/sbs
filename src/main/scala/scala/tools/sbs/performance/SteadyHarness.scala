@@ -17,8 +17,7 @@ import scala.compat.Platform
  */
 object SteadyHarness extends MeasurementHarness[PerfBenchmark.Benchmark] {
 
-  protected val mode = SteadyState
-
+  protected val mode       = SteadyState
   protected val upperBound = manifest[PerfBenchmark.Benchmark]
 
   def measure(benchmark: PerfBenchmark.Benchmark): MeasurementResult = {

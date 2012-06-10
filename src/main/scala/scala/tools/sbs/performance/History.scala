@@ -15,10 +15,6 @@ import scala.collection.generic.CanBuildFrom
 import scala.collection.mutable.ArrayBuffer
 import scala.tools.sbs.benchmark.BenchmarkBase.Benchmark
 
-import scala.collection.generic.CanBuildFrom
-import scala.collection.mutable.ArrayBuffer
-import scala.tools.sbs.benchmark.BenchmarkBase.Benchmark
-
 trait History {
 
   type subHistorian <: Historian

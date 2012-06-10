@@ -36,33 +36,23 @@ class Series(config: Config, log: Log) {
   }
 
   def apply(idx: Int) = data.apply(idx)
-
-  def head = data.head
-
-  def tail = new Series(config, log, data.tail, _confidenceLevel)
-
-  def last = data.last
-
-  def length = data.length
-
-  def clear() = data.clear()
+  def head            = data.head
+  def tail            = new Series(config, log, data.tail, _confidenceLevel)
+  def last            = data.last
+  def length          = data.length
+  def clear()         = data.clear()
 
   def +=(ele: Long) = {
     data += ele
     this
   }
 
-  def sum = data.sum
-
-  def foldLeft[B](z: B)(op: (B, Long) => B) = data.foldLeft[B](z)(op)
-
+  def sum                                    = data.sum
+  def foldLeft[B](z: B)(op: (B, Long) => B)  = data.foldLeft[B](z)(op)
   def foldRight[B](z: B)(op: (Long, B) => B) = data.foldRight[B](z)(op)
-
-  def foreach[U](f: Long => Unit): Unit = data foreach f
-
-  def forall(op: Long => Boolean) = data forall op
-
-  def remove(n: Int) = data remove n
+  def foreach[U](f: Long => Unit): Unit      = data foreach f
+  def forall(op: Long => Boolean)            = data forall op
+  def remove(n: Int)                         = data remove n
 
   /** Calculates statistical metrics.
    *

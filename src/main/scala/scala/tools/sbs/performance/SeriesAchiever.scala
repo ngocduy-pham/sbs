@@ -30,11 +30,10 @@ class SeriesAchiever(config: Config, log: Log) {
           measure: () => Long,
           newlyAchieve: Boolean = true): MeasurementResult = {
 
-    var series = new Series(config, log)
-    var unwarmable = false
-
-    val warmMax = benchmark.measurement * config.warmRepeat
-    var warmCount = 0
+    var series       = new Series(config, log)
+    var unwarmable   = false
+    val warmMax      = benchmark.measurement * config.warmRepeat
+    var warmCount    = 0
     var measureCount = 0
 
     def getSeries {

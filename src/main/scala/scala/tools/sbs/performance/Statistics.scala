@@ -222,18 +222,15 @@ trait Statistics {
     private def testConfidenceIntervals(benchmark: Benchmark,
                                         current: Series,
                                         historian: History.Historian): RegressionResult = {
-      val currentMean = mean(current)
-      val currentSD = standardDeviation(current)
-      val currentN = current.length
-
-      val previous = historian.head
-
+      val currentMean  = mean(current)
+      val currentSD    = standardDeviation(current)
+      val currentN     = current.length
+      val previous     = historian.head
       val previousMean = mean(previous)
-      val previousSD = standardDeviation(previous)
-      val previousN = previous.length
-
-      val diff = previousMean - currentMean
-      val slower = currentMean > previousMean
+      val previousSD   = standardDeviation(previous)
+      val previousN    = previous.length
+      val diff         = previousMean - currentMean
+      val slower       = currentMean > previousMean
 
       if ((current.confidenceLevel == 100) && (previous.confidenceLevel == 100) && !slower) {
         CIRegressionSuccess(
@@ -246,8 +243,8 @@ trait Statistics {
       else {
         reduceConfidenceLevel()
 
-        val s = sqrt(previousSD * previousSD / previousN + currentSD * currentSD / currentN)
-        var ciLeft: Double = 0
+        val s               = sqrt(previousSD * previousSD / previousN + currentSD * currentSD / currentN)
+        var ciLeft: Double  = 0
         var ciRight: Double = 0
 
         var ok = false
@@ -346,9 +343,9 @@ trait Statistics {
       else {
         // Performance case
 
-        val n1 = historian.length
-        val n2 = (historian foldLeft 0)(_ + _.length) + current.length - historian.length - 1
-        val FValue = SSA * n2 / SSE / n1
+        val n1        = historian.length
+        val n2        = (historian foldLeft 0)(_ + _.length) + current.length - historian.length - 1
+        val FValue    = SSA * n2 / SSE / n1
         var F: Double = 0
 
         var ok = false

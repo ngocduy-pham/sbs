@@ -35,60 +35,54 @@ trait Mode {
  */
 object DummyMode extends Mode {
 
-  val location = "dummy"
+  val location    = "dummy"
+  val description = "Just running"
 
   override val toString = "dummy"
-
-  val description = "Just running"
 
 }
 
 object StartUpState extends Mode {
 
-  val location = "startup"
+  val location    = "startup"
+  val description = "Benchmarking performance in start-up state"
 
   override val toString = "startup"
-
-  val description = "Benchmarking performance in start-up state"
 
 }
 
 object SteadyState extends Mode {
 
-  val location = "steady"
+  val location    = "steady"
+  val description = "Benchmarking performance in steady state"
 
   override val toString = "steady"
-
-  val description = "Benchmarking performance in steady state"
 
 }
 
 object MemoryUsage extends Mode {
 
-  val location = "memory"
-
-  override val toString = "memory"
-
+  val location    = "memory"
   val description = "Benchmarking memory consumption in steady state"
 
+  override val toString = "memory"
+      
 }
 
 object Profiling extends Mode {
 
-  val location = "profile"
+  val location    = "profile"
+  val description = "Profiling metrics"
 
   override val toString = "profile"
-
-  val description = "Profiling metrics"
 
 }
 
 object Pinpointing extends Mode {
 
-  val location = "pinpoint"
+  val location    = "pinpoint"
+  val description = "Pinpointing regression detection"
 
   override val toString = "pinpoint"
-
-  val description = "Pinpointing regression detection"
 
 }

@@ -39,9 +39,9 @@ object ArgumentParser {
    */
   def parse(args: Array[String]): (Config, Log, InfoPack) = {
     val config = new Config(args)
-    UI.config = config
-    val log = LogFactory(config)
-    val pack = new InfoPack
+    UI.config  = config
+    val log    = LogFactory(config)
+    val pack   = new InfoPack
     config.modes foreach (mode => {
       pack switchMode mode
       val nameList =
@@ -71,12 +71,12 @@ object ArgumentParser {
         else (name, path.path + ".arg", null)
       }
     }
-    var sample = config.sample
-    var timeout = config.timeout
+    var sample        = config.sample
+    var timeout       = config.timeout
     var shouldCompile = config.shouldCompile
     var classpathURLs = List[URL]()
-    var args = List[String]()
-    var src = maybeSrc
+    var args          = List[String]()
+    var src           = maybeSrc
 
     try {
       val argBuffer = Source.fromFile(argFile)

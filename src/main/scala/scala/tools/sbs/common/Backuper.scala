@@ -27,11 +27,9 @@ trait Backuper {
   def location: Directory
   def storage: Directory
 
-  private var backuped = false
-
+  private var backuped    = false
   private val backupFiles = HashMap[File, File]()
-
-  private val placeOf = HashMap[File, Directory]()
+  private val placeOf     = HashMap[File, Directory]()
 
   def backup() = {
     log.debug("Backup")
@@ -75,11 +73,11 @@ object Backuper {
 
   def apply(_log: Log, _config: Config, _files: List[File], _location: Directory, _storage: Directory): Backuper =
     new Backuper with Configured {
-      val config = _config
-      val log = _log
-      val files = _files
+      val config   = _config
+      val log      = _log
+      val files    = _files
       val location = _location
-      val storage = _storage
+      val storage  = _storage
     }
 
 }

@@ -41,9 +41,7 @@ trait Template {
   val timeout = 45000
 
   def init
-
   def run // Do something wasting time here
-
   def reset
 
 }

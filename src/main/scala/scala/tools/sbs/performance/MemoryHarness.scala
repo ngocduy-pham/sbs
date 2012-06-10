@@ -19,8 +19,7 @@ import PerfBenchmark.Benchmark
   */
 object MemoryHarness extends MeasurementHarness[Benchmark] {
 
-  protected val mode = MemoryUsage
-
+  protected val mode       = MemoryUsage
   protected val upperBound = manifest[Benchmark]
 
   def measure(benchmark: Benchmark): MeasurementResult = {

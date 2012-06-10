@@ -21,10 +21,8 @@ trait Measurer extends Runner {
   self: Configured =>
 
   protected val mode: Mode
-
   protected val upperBound = manifest[PerfBenchmark.Benchmark]
-
-  val benchmarkFactory = PerfBenchmark.factory(log, config)
+  val benchmarkFactory     = PerfBenchmark.factory(log, config)
 
   protected def doBenchmarking(benchmark: BenchmarkBase.Benchmark): BenchmarkResult =
     measure(benchmark.asInstanceOf[PerfBenchmark.Benchmark]) match {

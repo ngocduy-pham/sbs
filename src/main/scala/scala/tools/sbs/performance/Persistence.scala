@@ -53,9 +53,9 @@ trait Persistence {
 
     def loadFromFile(): History.Historian = {
 
-      var line: String = null
+      var line: String   = null
       var series: Series = null
-      var justLoaded = History(benchmark, mode)
+      var justLoaded     = History(benchmark, mode)
 
       log.debug("--Persistor directory--  " + location.path)
 

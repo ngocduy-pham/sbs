@@ -7,7 +7,6 @@ import scala.tools.sbs.util.Constant
 trait BenchmarkResult {
 
   def benchmarkName: String
-
   def toReport: ArrayBuffer[String]
 
 }
@@ -19,8 +18,7 @@ trait BenchmarkFailure extends BenchmarkResult
 case class CompileBenchmarkFailure(info: BenchmarkInfo) extends BenchmarkFailure {
 
   def benchmarkName = info.name
-
-  def toReport = ArrayBuffer(Constant.INDENT + "Compiling benchmark failed")
+  def toReport      = ArrayBuffer(Constant.INDENT + "Compiling benchmark failed")
 
 }
 
@@ -36,24 +34,17 @@ case class ExceptionBenchmarkFailure(benchmarkName: String, exception: Exception
   */
 class ResultPack {
 
-  private var modes = ArrayBuffer[ReportMode](new ReportMode(DummyMode))
-
-  def switchMode(mode: Mode) = modes :+= new ReportMode(mode)
-
+  private var modes       = ArrayBuffer[ReportMode](new ReportMode(DummyMode))
   private def currentMode = modes.last
 
-  def add(newResult: BenchmarkResult) = currentMode add newResult
-
-  def total = modes./:(0)((total, mode) => total + mode.results.length)
-
-  def ok = success.length
-
-  def failed = total - ok
-
+  def switchMode(mode: Mode)            = modes :+= new ReportMode(mode)
+  def add(newResult: BenchmarkResult)   = currentMode add newResult
   def foreach(mode: ReportMode => Unit) = modes foreach mode
 
+  def total   = modes./:(0)((total, mode) => total + mode.results.length)
+  def ok      = success.length
+  def failed  = total - ok
   def success = modes./:(ArrayBuffer[BenchmarkResult]())((arr, mode) => arr ++ mode.success)
-
   def failure = modes./:(ArrayBuffer[BenchmarkResult]())((arr, mode) => arr ++ mode.failure)
 
 }
@@ -61,17 +52,13 @@ class ResultPack {
 class ReportMode(mode: Mode) {
 
   private var _results = ArrayBuffer[BenchmarkResult]()
-
-  def add(newResult: BenchmarkResult) = _results += newResult
-
   def results = _results
 
+  def add(newResult: BenchmarkResult)     = _results += newResult
   def foreach(f: BenchmarkResult => Unit) = results foreach f
 
-  def success = results filterNot (failure contains _)
-
-  def failure = results filter (_.isInstanceOf[BenchmarkFailure])
-
+  def success  = results filterNot (failure contains _)
+  def failure  = results filter (_.isInstanceOf[BenchmarkFailure])
   def toReport = "[" + mode.description + "]"
 
 }

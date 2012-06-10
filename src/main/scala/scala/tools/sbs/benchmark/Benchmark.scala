@@ -54,13 +54,11 @@ trait BenchmarkBase {
       */
     private val oldContext = Thread.currentThread.getContextClassLoader
 
-    def init() = Thread.currentThread.setContextClassLoader(context)
-
-    def run() = method.invoke(null, Array(arguments.toArray: AnyRef): _*)
-
+    def init()  = Thread.currentThread.setContextClassLoader(context)
+    def run()   = method.invoke(null, Array(arguments.toArray: AnyRef): _*)
     def reset() = Thread.currentThread.setContextClassLoader(oldContext)
 
-    def createLog(mode: Mode): Log = LogFactory(name, mode, config)
+    def createLog(mode: Mode) = LogFactory(name, mode, config)
 
     def toXML =
       <SnippetBenchmark>
@@ -83,7 +81,7 @@ trait BenchmarkBase {
                       config: Config) extends Benchmark {
 
     val arguments = List[String]()
-    val timeout = benchmarkObject.timeout
+    val timeout   = benchmarkObject.timeout
 
     /** Current class loader context.
       */
@@ -101,7 +99,7 @@ trait BenchmarkBase {
       benchmarkObject.reset
     }
 
-    def createLog(mode: Mode): Log = LogFactory(name, mode, config)
+    def createLog(mode: Mode) = LogFactory(name, mode, config)
 
     def toXML =
       <InitializableBenchmark>
@@ -187,8 +185,8 @@ trait BenchmarkBase {
       case _         => default
     }
 
-    val stringToInt = (str: String) => str.toInt
-    val stringToList = (str: String) => str split Constant.COLON toList
+    val stringToInt            = (str: String) => str.toInt
+    val stringToList           = (str: String) => str split Constant.COLON toList
     def toOption(name: String) = Constant.ARG + name
 
   }
