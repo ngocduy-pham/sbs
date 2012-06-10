@@ -11,23 +11,24 @@
 package scala.tools.sbs
 package pinpoint
 
-import scala.tools.sbs.benchmark.Benchmark
+import scala.tools.sbs.benchmark.BenchmarkBase
 import scala.tools.sbs.io.Log
 
 trait Scrutinizer extends Runner {
+  self: Configured =>
 
-  protected val upperBound = manifest[PinpointBenchmark]
+  protected val upperBound = manifest[PinpointBenchmark.Benchmark]
 
-  val benchmarkFactory = new PinpointBenchmarkFactory(log, config)
+  val benchmarkFactory = PinpointBenchmark.factory(log, config)
 
-  protected def doBenchmarking(benchmark: Benchmark): BenchmarkResult =
-    scrutinize(benchmark.asInstanceOf[PinpointBenchmark])
+  protected def doBenchmarking(benchmark: BenchmarkBase.Benchmark): BenchmarkResult =
+    scrutinize(benchmark.asInstanceOf[PinpointBenchmark.Benchmark])
 
-  protected def scrutinize(benchmark: PinpointBenchmark): ScrutinyResult
+  protected def scrutinize(benchmark: PinpointBenchmark.Benchmark): ScrutinyResult
 
   /** Do-nothing method.
-   */
-  protected def doGenerating(benchmark: Benchmark) = ()
+    */
+  protected def doGenerating(benchmark: BenchmarkBase.Benchmark) = ()
 
 }
 

@@ -20,7 +20,7 @@ package benchmark
  *  `reset` changes everything back to their states before the benchmark run.
  *  For example, following is the source code of a initializable benchmark:
  *  {{{
- *  object OneBenchmark extends scala.tools.sbs.benchmark.BenchmarkTemplate {
+ *  object OneBenchmark extends scala.tools.sbs.benchmark.Template {
  *
  *    private var list = List[Int]()
  *
@@ -36,15 +36,7 @@ package benchmark
  *
  *  }}}
  */
-trait BenchmarkTemplate {
-
-  /** Number of history files to be created for future use.
-   *  Benchmarks may need their measurement histories for
-   *  regression detection, this value specifies the quantity of
-   *  these histories to be generated at the first time a
-   *  benchmark runs.
-   */
-  val sampleNumber = 0
+trait Template {
 
   val timeout = 45000
 

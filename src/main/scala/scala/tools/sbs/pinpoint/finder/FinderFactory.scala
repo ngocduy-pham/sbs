@@ -19,7 +19,7 @@ trait FinderFactory extends DiggingWrapper with BinaryWrapper {
 
   def apply(config: Config,
             log: Log,
-            benchmark: PinpointBenchmark,
+            benchmark: PinpointBenchmark.Benchmark,
             className: String,
             methodName: String,
             instrumentedPath: Directory,
@@ -35,7 +35,7 @@ trait FinderFactory extends DiggingWrapper with BinaryWrapper {
 
   def apply(config: Config,
             log: Log,
-            benchmark: PinpointBenchmark,
+            benchmark: PinpointBenchmark.Benchmark,
             className: String,
             methodName: String,
             instrumentedPath: Directory,

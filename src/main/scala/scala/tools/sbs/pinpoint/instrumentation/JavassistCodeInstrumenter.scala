@@ -15,7 +15,7 @@ package instrumentation
 import java.net.URL
 
 import scala.tools.nsc.io.Directory
-import scala.tools.sbs.common.Reflector
+import scala.tools.sbs.common.Reflection
 import scala.tools.sbs.io.Log
 
 import CodeInstrumentor.Instruction
@@ -185,7 +185,7 @@ class JavassistCodeInstrumenter(config: Config, log: Log, exclude: List[String])
     }
 
   def overwrite(clazz: InstrumentingClass, context: ClassLoader) =
-    clazz writeFile (Reflector(config, log).locationOf(clazz.getName, context).path)
+    clazz writeFile (Reflection(config, log).locationOf(clazz.getName, context).path)
 
   def writeFile(clazz: InstrumentingClass, location: Directory) =
     clazz writeFile location.path

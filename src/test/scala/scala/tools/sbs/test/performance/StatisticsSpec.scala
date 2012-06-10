@@ -4,13 +4,12 @@ package performance
 package regression
 
 import scala.collection.mutable.ArrayBuffer
-import scala.tools.sbs.performance.regression.ANOVARegressionFailure
-import scala.tools.sbs.performance.regression.ANOVARegressionSuccess
-import scala.tools.sbs.performance.regression.CIRegressionFailure
-import scala.tools.sbs.performance.regression.CIRegressionSuccess
-import scala.tools.sbs.performance.regression.HistoryFactory
-import scala.tools.sbs.performance.regression.Statistics
-import scala.tools.sbs.performance.regression.StatisticsFactory
+import scala.tools.sbs.performance.ANOVARegressionFailure
+import scala.tools.sbs.performance.ANOVARegressionSuccess
+import scala.tools.sbs.performance.CIRegressionFailure
+import scala.tools.sbs.performance.CIRegressionSuccess
+import scala.tools.sbs.performance.History
+import scala.tools.sbs.performance.Statistics
 import scala.tools.sbs.performance.Series
 
 import org.scalatest.Spec
@@ -19,11 +18,11 @@ class StatisticsSpec extends Spec {
 
   private var s: Series = _
   private var testS: Series = _
-  private var statistics: Statistics = _
+  private var statistics: Statistics.Statistician = _
 
   def init(arr: ArrayBuffer[Long]) {
     s = new Series(testConfig, testLog, arr, 99)
-    statistics = StatisticsFactory(testConfig, testLog)
+    statistics = Statistics(testConfig, testLog)
   }
 
   describe("A Statistics") {
@@ -39,27 +38,27 @@ class StatisticsSpec extends Spec {
     }
 
     it("reduces its confidence level at 100% from the beginning") {
-      statistics = StatisticsFactory(testConfig, testLog)
+      statistics = Statistics(testConfig, testLog)
       assert(statistics.confidenceLevel == 100)
     }
 
     it("reduces its confidence level from 100% to 99%") {
-      statistics = StatisticsFactory(testConfig, testLog)
+      statistics = Statistics(testConfig, testLog)
       assert(statistics.reduceConfidenceLevel == 99)
     }
 
     it("reduces its confidence level from 99% to 95%") {
-      statistics = StatisticsFactory(testConfig, testLog, 0.01)
+      statistics = Statistics(testConfig, testLog, 0.01)
       assert(statistics.reduceConfidenceLevel == 95)
     }
 
     it("reduces its confidence level from 95% to 90%") {
-      statistics = StatisticsFactory(testConfig, testLog, 0.05)
+      statistics = Statistics(testConfig, testLog, 0.05)
       assert(statistics.reduceConfidenceLevel == 90)
     }
 
     it("should not reduce its confidence level in case it has already below threadshold") {
-      statistics = StatisticsFactory(testConfig, testLog, (100 - testConfig.leastConfidenceLevel + 1) / 100D)
+      statistics = Statistics(testConfig, testLog, (100 - testConfig.leastConfidenceLevel + 1) / 100D)
       expect(testConfig.leastConfidenceLevel - 1)(statistics.reduceConfidenceLevel)
     }
 
@@ -100,16 +99,16 @@ class StatisticsSpec extends Spec {
     }
 
     it("returns BenchmarkSuccess object if old and new Series are `same same`") {
-      statistics = StatisticsFactory(testConfig, testLog)
-      val history = HistoryFactory(DummyBenchmark, SteadyState)
+      statistics = Statistics(testConfig, testLog)
+      val history = History(DummyBenchmark, SteadyState)
       history add about1kSeries2
       var result = statistics.testDifference(DummyBenchmark, about1kSeries1, history)
       assert(result.isInstanceOf[CIRegressionSuccess])
     }
 
     it("returns BenchmarkSuccess object 3 Series are `same same`") {
-      statistics = StatisticsFactory(testConfig, testLog)
-      val history = HistoryFactory(DummyBenchmark, SteadyState)
+      statistics = Statistics(testConfig, testLog)
+      val history = History(DummyBenchmark, SteadyState)
       history add about1kSeries2
       history add about1kSeries3
       var result = statistics.testDifference(DummyBenchmark, about1kSeries1, history)
@@ -117,8 +116,8 @@ class StatisticsSpec extends Spec {
     }
 
     it("returns BenchmarkFailure object if 3 Series are statistically significant different") {
-      statistics = StatisticsFactory(testConfig, testLog)
-      val history = HistoryFactory(DummyBenchmark, SteadyState)
+      statistics = Statistics(testConfig, testLog)
+      val history = History(DummyBenchmark, SteadyState)
       history add about1kSeries2
       history add about1kSeries3
       val result = statistics.testDifference(DummyBenchmark, about5k5Series, history)
@@ -126,15 +125,15 @@ class StatisticsSpec extends Spec {
     }
 
     it("returns BenchmarkFailure object if old and new Series are statistically significant different") {
-      statistics = StatisticsFactory(testConfig, testLog)
-      val history = HistoryFactory(DummyBenchmark, SteadyState)
+      statistics = Statistics(testConfig, testLog)
+      val history = History(DummyBenchmark, SteadyState)
       history add about1kSeries3
       val result = statistics.testDifference(DummyBenchmark, about5k5Series, history)
       assert(result.isInstanceOf[CIRegressionFailure])
     }
 
     it("raises Exception if history is less than 1") {
-      val history = HistoryFactory(DummyBenchmark, SteadyState)
+      val history = History(DummyBenchmark, SteadyState)
       intercept[Exception] {
         statistics.testDifference(DummyBenchmark, about1kSeries1, history)
       }

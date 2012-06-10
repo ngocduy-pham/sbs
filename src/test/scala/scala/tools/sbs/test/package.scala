@@ -6,7 +6,7 @@ import scala.tools.nsc.io.Directory
 import scala.tools.sbs.io.LogFactory
 import scala.tools.sbs.io.UI
 import scala.tools.sbs.performance.MeasurementSuccess
-import scala.tools.sbs.performance.PerformanceBenchmark
+import scala.tools.sbs.performance.PerfBenchmark
 import scala.tools.sbs.performance.Series
 
 package object test {
@@ -27,7 +27,7 @@ package object test {
 
   val testLog = LogFactory(testConfig)
 
-  object DummyBenchmark extends PerformanceBenchmark {
+  object DummyBenchmark extends PerfBenchmark.Benchmark {
     override def name = "dummy"
     def src = testDir
     def arguments = List[String]()
@@ -37,7 +37,7 @@ package object test {
     def sampleNumber = 0
     def timeout = 60000
     def shouldCompile = false
-    def createLog(mode: BenchmarkMode) = testLog
+    def createLog(mode: Mode) = testLog
     def init() = ()
     def run() = ()
     def reset() = ()

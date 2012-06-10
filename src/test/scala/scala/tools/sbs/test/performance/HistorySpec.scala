@@ -1,9 +1,8 @@
 package scala.tools.sbs
 package test
 package performance
-package regression
 
-import scala.tools.sbs.performance.regression.History
+import scala.tools.sbs.performance.History
 
 import org.scalatest.Spec
 

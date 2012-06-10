@@ -27,7 +27,7 @@ trait FinderWrapper {
 
   abstract class BasicFinder(val config: Config,
                              val log: Log,
-                             val benchmark: PinpointBenchmark,
+                             val benchmark: PinpointBenchmark.Benchmark,
                              val className: String,
                              val methodName: String,
                              val instrumentedPath: Directory,

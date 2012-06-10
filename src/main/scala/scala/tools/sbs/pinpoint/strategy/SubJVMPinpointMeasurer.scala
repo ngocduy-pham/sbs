@@ -16,7 +16,7 @@ import java.net.URL
 
 import scala.tools.sbs.io.Log
 import scala.tools.sbs.performance.MeasurementResult
-import scala.tools.sbs.performance.PerformanceBenchmark
+import scala.tools.sbs.performance.PerfBenchmark
 import scala.tools.sbs.performance.SubJVMMeasurer
 
 class SubJVMPinpointMeasurer(log: Log, config: Config)
@@ -25,7 +25,7 @@ class SubJVMPinpointMeasurer(log: Log, config: Config)
 
   /** Bridge method.
    */
-  def measure(benchmark: PinpointBenchmark, classpathURLs: List[URL]): MeasurementResult =
-    measure(benchmark: PerformanceBenchmark, classpathURLs)
+  def measure(benchmark: PinpointBenchmark.Benchmark, classpathURLs: List[URL]): MeasurementResult =
+    super[SubJVMMeasurer].measure(benchmark, classpathURLs)
 
 }

@@ -12,26 +12,26 @@ package scala.tools.sbs
 package performance
 
 import scala.tools.sbs.io.Log
-
-import PerfBenchmark.Benchmark
+import scala.tools.sbs.benchmark.BenchmarkBase
 
 /** A measurer for a benchmarking. Should have a typical type for benchmarking
-  * on a typical {@link BenchmarkMode}.
+  * on a typical {@link Mode}.
   */
 trait Measurer extends Runner {
+  self: Configured =>
 
-  protected val mode: BenchmarkMode
+  protected val mode: Mode
 
-  protected val upperBound = manifest[Benchmark]
+  protected val upperBound = manifest[PerfBenchmark.Benchmark]
 
   val benchmarkFactory = PerfBenchmark.factory(log, config)
 
-  protected def doBenchmarking(benchmark: Benchmark): BenchmarkResult =
-    measure(benchmark.asInstanceOf[Benchmark]) match {
+  protected def doBenchmarking(benchmark: BenchmarkBase.Benchmark): BenchmarkResult =
+    measure(benchmark.asInstanceOf[PerfBenchmark.Benchmark]) match {
       case metric: MeasurementSuccess => {
 
         log.info("[  Run OK  ]")
-        log.debug("--Metric: " + metric.getClass.getName)
+        log.debug("--metric: " + metric.getClass.getName)
 
         val regressionResult = regress(benchmark, metric)
         regressionResult match {
@@ -41,7 +41,7 @@ trait Measurer extends Runner {
           }
           case _ => {
             log.info("[Benchmark FAILED]")
-            log.debug("--Benchmark failed: " + regressionResult.getClass.getName)
+            log.debug("--benchmark failed: " + regressionResult.getClass.getName)
             store(benchmark, metric, false)
           }
         }
@@ -49,25 +49,26 @@ trait Measurer extends Runner {
       }
       case failed: MeasurementFailure => {
         log.info("[Run FAILED]")
-        log.debug("--Run failed: " + failed.getClass.getName)
+        log.debug("--run failed: " + failed.getClass.getName)
         failure(benchmark, failed)
       }
     }
 
-  protected def doGenerating(benchmark: Benchmark) {
+  protected def doGenerating(benchmark: BenchmarkBase.Benchmark) {
+    val perfBenchmark = benchmark.asInstanceOf[PerfBenchmark.Benchmark]
     var i = 0
-    while (i < benchmark.sampleNumber) {
-      measure(benchmark.asInstanceOf[Benchmark]) match {
+    while (i < perfBenchmark.sampleNumber) {
+      measure(perfBenchmark) match {
         case success: MeasurementSuccess =>
-          if (store(benchmark, success, true)) {
-            log.debug("--Stored--")
+          if (store(perfBenchmark, success, true)) {
+            log.debug("--stored--")
             i += 1
-            log.verbose("--Got " + i + " sample(s)--")
+            log.verbose("--got " + i + " sample(s)--")
           }
           else {
-            log.debug("--Cannot store--")
+            log.debug("--cannot store " + benchmark.name)
           }
-        case failure: MeasurementFailure => log.debug("--Generation error at " + i + ": " + failure.reason + "--")
+        case failure: MeasurementFailure => log.debug("--generation error at " + i + ": " + failure.reason + "--")
         case _                           => throw new Error("WTF is just created?")
       }
     }
@@ -85,13 +86,13 @@ trait Measurer extends Runner {
     * between two measurements, so if `runs` is larger than 1,
     * the benchmark may fail to run.)
     */
-  protected def measure(benchmark: Benchmark): MeasurementResult
+  protected def measure(benchmark: PerfBenchmark.Benchmark): MeasurementResult
 
   /** Loads previous results and uses statistically rigorous method to detect regression.
     *
     * @param result	The metric result just measured.
     */
-  protected def regress(benchmark: Benchmark, metric: MeasurementSuccess): BenchmarkResult =
+  protected def regress(benchmark: BenchmarkBase.Benchmark, metric: MeasurementSuccess): BenchmarkResult =
     metric match {
       case mesurement: MeasurementSuccess => {
         val history = Persistence(log, config, benchmark, mode).load()
@@ -107,10 +108,10 @@ trait Measurer extends Runner {
       }
     }
 
-  protected def store(benchmark: Benchmark, metric: MeasurementSuccess, success: Boolean) =
+  protected def store(benchmark: BenchmarkBase.Benchmark, metric: MeasurementSuccess, success: Boolean) =
     Persistence(log, config, benchmark, mode).store(metric, success)
 
-  protected def failure(benchmark: Benchmark, failed: MeasurementFailure): BenchmarkResult =
+  protected def failure(benchmark: BenchmarkBase.Benchmark, failed: MeasurementFailure): BenchmarkResult =
     ImmeasurableFailure(benchmark, failed)
 
 }
@@ -119,7 +120,7 @@ trait Measurer extends Runner {
   */
 object MeasurerFactory {
 
-  def apply(config: Config, log: Log, mode: BenchmarkMode, harnessFactory: MeasurementHarnessFactory): Measurer = mode match {
+  def apply(config: Config, log: Log, mode: Mode, harnessFactory: MeasurementHarnessFactory): Measurer = mode match {
     case StartUpState => new StartupHarness(log, config)
     case _            => new SubJVMMeasurer(log, config, mode, harnessFactory(mode))
   }

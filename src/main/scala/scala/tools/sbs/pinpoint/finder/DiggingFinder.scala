@@ -24,7 +24,7 @@ trait DiggingWrapper extends FinderWrapper {
 
   class DiggingFinder(config: Config,
                       log: Log,
-                      benchmark: PinpointBenchmark,
+                      benchmark: PinpointBenchmark.Benchmark,
                       className: String,
                       methodName: String,
                       instrumentedPath: Directory,
@@ -48,7 +48,7 @@ trait DiggingWrapper extends FinderWrapper {
 
     def find(declaringClass: String, diggingMethod: String, dug: List[String]): FindingResult = {
 
-      val instrumentor = CodeInstrumentor(config, log, benchmark.pinpointExclude)
+      val instrumentor = CodeInstrumentor(config, log, benchmark.exclude)
 
       val invocationCollector = new InvocationCollector(
         config,
@@ -97,9 +97,9 @@ trait DiggingWrapper extends FinderWrapper {
       log.info("")
 
       currentLevelRegression match {
-        case Regression(_, position, _, _, _) if ((position.length == 1) &&
+        case RegressionPoint(_, position, _, _, _) if ((position.length == 1) &&
           (shouldProceed(position.first.prototype, dug)) &&
-          !(benchmark.pinpointExclude exists (position.first.declaringClass matches _))) =>
+          !(benchmark.exclude exists (position.first.declaringClass matches _))) =>
           try {
             log.verbose("  Digging into: " + position.first.prototype)
 
@@ -127,7 +127,7 @@ trait DiggingWrapper extends FinderWrapper {
     }
 
     def shouldProceed(prototype: String, dug: List[String]) =
-      (benchmark.pinpointDepth == -1) || (dug.length < benchmark.pinpointDepth && !(dug contains prototype))
+      (benchmark.depth == -1) || (dug.length < benchmark.depth && !(dug contains prototype))
 
   }
 

@@ -15,8 +15,8 @@ import java.net.URL
 
 import scala.tools.nsc.io.Directory
 import scala.tools.sbs.io.Log
-import scala.tools.sbs.performance.regression.CIRegressionFailure
-import scala.tools.sbs.performance.regression.CIRegressionSuccess
+import scala.tools.sbs.performance.CIRegressionFailure
+import scala.tools.sbs.performance.CIRegressionSuccess
 import scala.tools.sbs.performance.MeasurementSuccess
 import scala.tools.sbs.pinpoint.instrumentation.JavaUtility
 import scala.tools.sbs.pinpoint.strategy.InstrumentationRunner
@@ -27,7 +27,7 @@ import scala.tools.sbs.pinpoint.strategy.TwinningDetector
 
 class MethodRegressionDetector(val config: Config,
                                val log: Log,
-                               val benchmark: PinpointBenchmark,
+                               val benchmark: PinpointBenchmark.Benchmark,
                                val instrumentedPath: Directory,
                                val storagePath: Directory)
   extends ScrutinyRegressionDetector
@@ -37,15 +37,15 @@ class MethodRegressionDetector(val config: Config,
   with InstrumentationUtility
   with Configured {
   
-  val className = benchmark.pinpointClass
-  val methodName = benchmark.pinpointMethod
+  val className = benchmark.className
+  val methodName = benchmark.methodName
 
-  def detect(stupidDummyNotTobeUsedBenchmark: PinpointBenchmark): ScrutinyRegressionResult = {
-    if (benchmark.pinpointClass == "" || benchmark.pinpointMethod == "") {
+  def detect(stupidDummyNotTobeUsedBenchmark: PinpointBenchmark.Benchmark): ScrutinyRegressionResult = {
+    if (benchmark.className == "" || benchmark.methodName == "") {
       throw new NoPinpointingMethodException(benchmark)
     }
 
-    log.info("Detecting performance regression of method " + benchmark.pinpointClass + "." + benchmark.pinpointMethod)
+    log.info("Detecting performance regression of method " + benchmark.className + "." + benchmark.methodName)
     log.info("")
 
     twinningDetect(
@@ -70,7 +70,7 @@ class MethodRegressionDetector(val config: Config,
   private lazy val measureCurrent = measureCommon(config.classpathURLs ++ benchmark.classpathURLs)
 
   private lazy val measurePrevious = exploit(
-    benchmark.pinpointPrevious,
+    benchmark.previous,
     benchmark.context,
     config.classpathURLs ++ benchmark.classpathURLs,
     measureCommon)

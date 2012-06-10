@@ -3,21 +3,21 @@ package test
 package common
 
 import scala.tools.nsc.util.ClassPath
-import scala.tools.sbs.benchmark.Benchmark
-import scala.tools.sbs.common.JVMInvokerFactory
+import scala.tools.sbs.benchmark.BenchmarkBase
+import scala.tools.sbs.common.JVMInvoker
 import scala.tools.sbs.common.ObjectHarness
 
 import org.scalatest.Spec
 
 class JVMInvokerSpec extends Spec {
 
-  object DummyBenchmark extends Benchmark {
+  object DummyBenchmark extends BenchmarkBase.Benchmark {
     def name = "Dummy"
     def arguments = List("$1", "$2")
     def classpathURLs = List(testDir.toURL)
     def sampleNumber = 0
     def timeout = 60000
-    def createLog(mode: BenchmarkMode) = testLog
+    def createLog(mode: Mode) = testLog
     def init() = ()
     def run() = ()
     def reset() = ()
@@ -31,7 +31,7 @@ class JVMInvokerSpec extends Spec {
 
   }
 
-  val invoker = JVMInvokerFactory(testLog, testConfig)
+  val invoker = JVMInvoker(testLog, testConfig)
 
   describe("A JVMInvoker") {
 

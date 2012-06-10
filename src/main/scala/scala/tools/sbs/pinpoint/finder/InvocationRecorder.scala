@@ -13,7 +13,7 @@ package pinpoint
 package finder
 
 import java.net.URL
-import scala.tools.sbs.common.JVMInvokerFactory
+import scala.tools.sbs.common.JVMInvoker
 import scala.tools.sbs.common.RunOnlyHarness
 import scala.tools.sbs.pinpoint.instrumentation.JavaUtility
 import scala.tools.sbs.pinpoint.strategy.InstrumentationRunner
@@ -31,7 +31,7 @@ trait InvocationRecorder {
   val currentGraph: InvocationGraph = record(config.classpathURLs ++ benchmark.classpathURLs)
 
   val previousGraph: InvocationGraph = exploit(
-    benchmark.pinpointPrevious,
+    benchmark.previous,
     benchmark.context,
     config.classpathURLs ++ benchmark.classpathURLs,
     record)
@@ -59,7 +59,7 @@ trait InvocationRecorder {
           "<signature>" + signature + "	</signature>" +
           "</call>"))
 
-    val invoker = JVMInvokerFactory(log, config)
+    val invoker = JVMInvoker(log, config)
 
     instrumentAndRun(
       (method, instrumentor) => {

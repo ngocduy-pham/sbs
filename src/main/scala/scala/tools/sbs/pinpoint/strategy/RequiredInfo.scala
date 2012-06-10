@@ -18,7 +18,7 @@ import scala.tools.nsc.io.Directory
   */
 trait RequiredInfo {
 
-  val benchmark: PinpointBenchmark
+  val benchmark: PinpointBenchmark.Benchmark
 
   val className: String
 

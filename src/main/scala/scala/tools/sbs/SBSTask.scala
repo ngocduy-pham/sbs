@@ -20,6 +20,6 @@ class SBSTask extends Task {
     args = input split "  "
   }
 
-  override def execute() = BenchmarkDriver main args
+  override def execute() = Driver main args
 
 }

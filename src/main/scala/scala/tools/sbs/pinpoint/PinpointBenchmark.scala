@@ -12,40 +12,39 @@ package scala.tools.sbs
 package pinpoint
 
 import java.lang.reflect.Method
+import java.net.URL
+
 import scala.tools.nsc.io.Path.string2path
 import scala.tools.nsc.io.Directory
+import scala.tools.nsc.io.Path
 import scala.tools.sbs.benchmark.BenchmarkInfo
 import scala.tools.sbs.common.Reflection
 import scala.tools.sbs.io.Log
 import scala.tools.sbs.performance.PerfBenchmark
-import scala.tools.sbs.util.Constant
-import scala.testing.Benchmark
 import scala.tools.sbs.profiling.ProfBenchmark
-import scala.tools.nsc.io.Path
-import java.net.URL
+
+import PinpointBenchmark.Benchmark
 
 trait PinpointBenchmark extends PerfBenchmark with ProfBenchmark {
 
-  import PinpointBenchamrk.Benchmark
+  import PinpointBenchmark.Benchmark
 
-  type subBenchmark <: Benchmark
-
-  type subSnippet <: Snippet with subBenchmark
-
-  type subInitializable <: Initializable with subBenchmark
+  type subBenchmark     <: Benchmark
+  type subSnippet       <: subBenchmark
+  type subInitializable <: subBenchmark
 
   class Snippet(name: String,
                 arguments: List[String],
                 classpathURLs: List[URL],
                 src: Path,
-                sampleNumber: Int,
                 timeout: Int,
                 multiplier: Int,
                 measurement: Int,
+                sampleNumber: Int,
                 val className: String,
                 val methodName: String,
                 val exclude: List[String],
-                val privious: Directory,
+                val previous: Directory,
                 val depth: Int,
                 method: Method,
                 context: ClassLoader,
@@ -61,31 +60,47 @@ trait PinpointBenchmark extends PerfBenchmark with ProfBenchmark {
       config,
       multiplier,
       measurement,
-      sampleNumber)
-    with Benchmark
+      sampleNumber) with Benchmark { val fieldName = "" }
+
+  class Initializable(name: String,
+                      classpathURLs: List[URL],
+                      src: Path,
+                      benchmarkObject: PinpointTemplate,
+                      context: ClassLoader,
+                      config: Config)
+    extends super[PerfBenchmark].Initializable(
+      name,
+      classpathURLs,
+      src,
+      benchmarkObject,
+      context,
+      config) with Benchmark {
+
+    val className  = benchmarkObject.className
+    val methodName = benchmarkObject.methodName
+    val fieldName  = ""
+    val exclude    = benchmarkObject.exclude
+    val previous   = benchmarkObject.previous
+    val depth      = benchmarkObject.depth
+
+  }
 
   val classNameOpt = "classname"
-
-  val previousOpt = "previous"
-
-  val depthOpt = "depth"
+  val previousOpt  = "previous"
+  val depthOpt     = "depth"
 
 }
 
 object PinpointBenchmark extends PinpointBenchmark {
 
-  type subBenchmark = Benchmark
-
-  type subSnippet = Snippet
-
+  type subBenchmark     = Benchmark
+  type subSnippet       = Snippet
   type subInitializable = Initializable
-
-  type subFactory = Factory
+  type subFactory       = Factory
 
   trait Benchmark extends PerfBenchmark.Benchmark with ProfBenchmark.Benchmark {
 
     def classes: List[String] = Nil
-
     def className: String
 
     /** Location of the old class files to be used during pinpointing regression detection.
@@ -103,7 +118,6 @@ object PinpointBenchmark extends PinpointBenchmark {
   def factory(log: Log, config: Config) = new Factory with Configured {
 
     val log: Log = log
-
     val config: Config = config
 
     def createFrom(info: BenchmarkInfo): Benchmark = {
@@ -117,19 +131,6 @@ object PinpointBenchmark extends PinpointBenchmark {
         sampleOpt,
         previousOpt,
         depthOpt))
-      val className = argMap get classNameOpt match {
-        case Some(arg) => arg split Constant.COLON toList
-        case _         => config.className
-      }
-      val exclude = argMap get excludeOpt match {
-        case Some(arg) => arg split Constant.COLON toList
-        case _         => config.exclude
-      }
-      val methodName = argMap getOrElse (methodNameOpt, config.methodName)
-      val fieldName = argMap getOrElse (fieldNameOpt, config.fieldName)
-      val multiplier = getIntoOrElse(argMap get multiplierOpt, stringToInt, config.multiplier)
-      val measurement = getIntoOrElse(argMap get measurementOpt, stringToInt, config.measurement)
-      val sampleNumber = getIntoOrElse(argMap get sampleOpt, stringToInt, 0)
       load(
         info,
         (method: Method, context: ClassLoader) => new Snippet(
@@ -138,10 +139,14 @@ object PinpointBenchmark extends PinpointBenchmark {
           info.classpathURLs,
           info.src,
           info.timeout,
-          className,
-          exclude,
-          methodName,
-          fieldName,
+          getIntoOrElse(argMap get multiplierOpt, stringToInt, config.multiplier),
+          getIntoOrElse(argMap get measurementOpt, stringToInt, config.measurement),
+          getIntoOrElse(argMap get sampleOpt, stringToInt, 0),
+          argMap getOrElse (classNameOpt, config.className),
+          argMap getOrElse (methodNameOpt, config.methodName),
+          getIntoOrElse(argMap get excludeOpt, stringToList, config.exclude),
+          getIntoOrElse(argMap get previousOpt, s => Directory(s), config.previous),
+          getIntoOrElse(argMap get depthOpt, stringToInt, 1),
           method,
           context,
           config),
@@ -149,11 +154,10 @@ object PinpointBenchmark extends PinpointBenchmark {
           info.name,
           info.classpathURLs,
           info.src,
-          Reflection(config, log).getObject[PinpointBenchmarkTemplate](
-            info.name, config.classpathURLs ++ info.classpathURLs),
+          Reflection(config, log).getObject[PinpointTemplate](info.name, config.classpathURLs ++ info.classpathURLs),
           context,
           config),
-        classOf[PinpointBenchmarkTemplate].getName)
+        classOf[PinpointTemplate].getName)
     }
 
   }

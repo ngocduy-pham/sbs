@@ -60,7 +60,7 @@ object ArgumentParser {
    *
    *  @return	`List(Benchmark)` if there is actually a benchmark with the given name, Nil otherwise
    */
-  def getInfo(name: String, mode: BenchmarkMode, config: Config): BenchmarkInfo = {
+  def getInfo(name: String, mode: Mode, config: Config): BenchmarkInfo = {
     val (mainClassName, argFile, maybeSrc) = getSource(name, config.benchmarkDirectory / mode.location) match {
       case Some(source) =>
         if (source isFile) (source.stripExtension, (source.path stripSuffix "scala") + "arg", source)

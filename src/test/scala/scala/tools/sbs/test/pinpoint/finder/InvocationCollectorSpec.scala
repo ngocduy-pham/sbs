@@ -5,10 +5,9 @@ package finder
 import scala.collection.mutable.ArrayBuffer
 import scala.tools.nsc.io.Path.string2path
 import scala.tools.sbs.benchmark.BenchmarkInfo
-import scala.tools.sbs.common.BenchmarkCompilerFactory
+import scala.tools.sbs.common.BenchmarkCompiler
 import scala.tools.sbs.pinpoint.finder.InvocationCollector
 import scala.tools.sbs.pinpoint.PinpointBenchmark
-import scala.tools.sbs.pinpoint.PinpointBenchmarkFactory
 import scala.tools.sbs.util.FileUtil
 
 import org.scalatest.BeforeAndAfterAll
@@ -26,10 +25,10 @@ class InvocationCollectorSpec extends Spec with BeforeAndAfterAll {
 
   val backupPlace = invoCollectorDir / "backup" createDirectory ()
 
-  val benchmarkInfo = new BenchmarkInfo(benchmarkName, invoCollectorFile, Nil, Nil, 0, -1, true)
+  val benchmarkInfo = new BenchmarkInfo(benchmarkName, invoCollectorFile, Nil, Nil, 0, true)
 
   def benchmarkSource(runBody: String, otherDefs: String) =
-    "class " + benchmarkName + """ extends scala.tools.sbs.pinpoint.PinpointBenchmarkTemplate {
+    "class " + benchmarkName + """ extends scala.tools.sbs.pinpoint.PinpointTemplate {
 	|
 	|  def init() = ()
 	|
@@ -55,10 +54,10 @@ class InvocationCollectorSpec extends Spec with BeforeAndAfterAll {
 
   def createBenchmark(content: String) = ({
     define(content)
-    val compiler = BenchmarkCompilerFactory(testLog, testConfig)
+    val compiler = BenchmarkCompiler(testLog, testConfig)
     benchmarkInfo.isCompiledOK(compiler, testConfig)
-    benchmarkInfo.expand(new PinpointBenchmarkFactory(testLog, testConfig), testConfig)
-  }).asInstanceOf[PinpointBenchmark]
+    benchmarkInfo.expand(PinpointBenchmark.factory(testLog, testConfig), testConfig)
+  }).asInstanceOf[PinpointBenchmark.Benchmark]
 
   def createCollector(runBody: String, otherDefs: String, className: String, methodName: String) =
     new InvocationCollector(

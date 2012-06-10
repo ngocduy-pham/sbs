@@ -12,7 +12,7 @@ package scala.tools.sbs
 package pinpoint
 package strategy
 
-import scala.tools.sbs.performance.regression.StatisticsFactory
+import scala.tools.sbs.performance.Statistics
 import scala.tools.sbs.performance.MeasurementHarness
 import scala.tools.sbs.performance.MeasurementResult
 
@@ -20,7 +20,7 @@ import scala.tools.sbs.performance.MeasurementResult
  *  Runs just like {@link scala.tools.sbs.performance.SteadyHarness}
  *  does, but only measures the first running time of a piece of code.
  */
-object PinpointHarness extends MeasurementHarness[PinpointBenchmark] {
+object PinpointHarness extends MeasurementHarness[PinpointBenchmark.Benchmark] {
 
   protected val upperBound = manifest[PinpointBenchmark]
 
@@ -112,8 +112,8 @@ object PinpointHarness extends MeasurementHarness[PinpointBenchmark] {
 
   protected val mode = Pinpointing
 
-  def measure(benchmark: PinpointBenchmark): MeasurementResult = {
-    val statistic = StatisticsFactory(config, log)
+  def measure(benchmark: PinpointBenchmark.Benchmark): MeasurementResult = {
+    val statistic = Statistics(config, log)
     log.info("[Benchmarking pinpointing regression detection]")
     seriesAchiever achieve (
       benchmark,
@@ -124,7 +124,7 @@ object PinpointHarness extends MeasurementHarness[PinpointBenchmark] {
         benchmark.run()
         benchmark.reset()
         if (measured == -1) {
-          throw new Exception("Method " + benchmark.pinpointClass + "." + benchmark.pinpointMethod + " is never run")
+          throw new Exception("Method " + benchmark.className + "." + benchmark.methodName + " is never run")
         }
         else {
           measured

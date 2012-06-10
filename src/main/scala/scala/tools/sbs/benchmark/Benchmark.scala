@@ -19,6 +19,7 @@ import scala.tools.nsc.io.Path
 import scala.tools.nsc.util.ClassPath
 import scala.tools.sbs.common.Reflection
 import scala.tools.sbs.io.Log
+import scala.tools.sbs.io.LogFactory
 import scala.tools.sbs.util.Constant
 import scala.xml.Elem
 
@@ -28,13 +29,10 @@ trait BenchmarkBase {
 
   import BenchmarkBase.Benchmark
 
-  type subBenchmark <: Benchmark
-
-  type subSnippet <: Snippet with subBenchmark
-
-  type subInitializable <: Initializable with subBenchmark
-
-  type subFactory <: Factory
+  type subBenchmark     <: Benchmark
+  type subSnippet       <: subBenchmark
+  type subInitializable <: subBenchmark
+  type subFactory       <: Factory
 
   /** An implement of {@link Benchmark} trait.
     * `method` is the `main(args: Array[String])` method of the benchmark `object`.
@@ -44,7 +42,7 @@ trait BenchmarkBase {
                 val classpathURLs: List[URL],
                 val src: Path,
                 val timeout: Int,
-                context: ClassLoader,
+                val context: ClassLoader,
                 method: Method,
                 config: Config) extends Benchmark {
 
@@ -62,6 +60,8 @@ trait BenchmarkBase {
 
     def reset() = Thread.currentThread.setContextClassLoader(oldContext)
 
+    def createLog(mode: Mode): Log = LogFactory(name, mode, config)
+
     def toXML =
       <SnippetBenchmark>
         <name>{ name }</name>
@@ -78,8 +78,8 @@ trait BenchmarkBase {
   class Initializable(val name: String,
                       val classpathURLs: List[URL],
                       val src: Path,
-                      context: ClassLoader,
-                      benchmarkObject: BenchmarkTemplate,
+                      val context: ClassLoader,
+                      benchmarkObject: Template,
                       config: Config) extends Benchmark {
 
     val arguments = List[String]()
@@ -100,6 +100,8 @@ trait BenchmarkBase {
       Thread.currentThread.setContextClassLoader(oldContext)
       benchmarkObject.reset
     }
+
+    def createLog(mode: Mode): Log = LogFactory(name, mode, config)
 
     def toXML =
       <InitializableBenchmark>
@@ -186,9 +188,7 @@ trait BenchmarkBase {
     }
 
     val stringToInt = (str: String) => str.toInt
-
     val stringToList = (str: String) => str split Constant.COLON toList
-
     def toOption(name: String) = Constant.ARG + name
 
   }
@@ -201,13 +201,10 @@ trait BenchmarkBase {
 
 object BenchmarkBase extends BenchmarkBase {
 
-  type subBenchmark = Benchmark
-
-  type subSnippet = Snippet
-
+  type subBenchmark     = Benchmark
+  type subSnippet       = Snippet
   type subInitializable = Initializable
-
-  type subFactory = Factory
+  type subFactory       = Factory
 
   trait Benchmark {
 
@@ -227,7 +224,7 @@ object BenchmarkBase extends BenchmarkBase {
 
     /** Creates the logging object for each benchmark.
       */
-    def createLog(mode: BenchmarkMode): Log
+    def createLog(mode: Mode): Log
 
     /** Sets the running context and load benchmark classes.
       */
@@ -254,7 +251,6 @@ object BenchmarkBase extends BenchmarkBase {
   def factory(log: Log, config: Config) = new Factory with Configured {
 
     val log: Log = log
-
     val config: Config = config
 
     def createFrom(info: BenchmarkInfo): Benchmark = load(
@@ -274,10 +270,10 @@ object BenchmarkBase extends BenchmarkBase {
         info.classpathURLs,
         info.src,
         context,
-        Reflection(config, log).getObject[BenchmarkTemplate](info.name, config.classpathURLs ++ info.classpathURLs),
+        Reflection(config, log).getObject[Template](info.name, config.classpathURLs ++ info.classpathURLs),
         config
       ),
-      classOf[BenchmarkTemplate].getName)
+      classOf[Template].getName)
 
   }
 

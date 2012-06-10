@@ -68,8 +68,8 @@ object LogFactory {
 
   /** Creates log for one benchmark' running of one {@link BenchmarkMode}.
    */
-  def apply(benchmarkName: String, mode: BenchmarkMode, config: Config): Log = {
-    TextFileLog.createLog(benchmarkName, mode: BenchmarkMode, config.benchmarkDirectory) match {
+  def apply(benchmarkName: String, mode: Mode, config: Config): Log = {
+    TextFileLog.createLog(benchmarkName, mode: Mode, config.benchmarkDirectory) match {
       case Some(logFile) => new DualLog(new TextFileLog(logFile, config), config)
       case None          => UI
     }

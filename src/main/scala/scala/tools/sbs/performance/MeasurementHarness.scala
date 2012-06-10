@@ -22,12 +22,12 @@ import scala.xml.XML
 /** Driver for measurement in a separated JVM.
  *  Choose the harness to run and write the result to output stream.
  */
-trait MeasurementHarness[BenchmarkType <: BenchmarkBase.Benchmark] extends ObjectHarness with RuntimeTypeChecker {
+trait MeasurementHarness[SubBenchmark <: BenchmarkBase.Benchmark] extends ObjectHarness with RuntimeTypeChecker {
 
   protected var log: Log = null
   protected var seriesAchiever: SeriesAchiever = null
   protected var config: Config = null
-  protected def mode: BenchmarkMode
+  protected def mode: Mode
 
   /** Entry point of the new process.
    */
@@ -38,7 +38,7 @@ trait MeasurementHarness[BenchmarkType <: BenchmarkBase.Benchmark] extends Objec
     if (check(benchmark.getClass)) {
       log = benchmark createLog mode
       seriesAchiever = new SeriesAchiever(config, log)
-      try reportResult(this measure benchmark.asInstanceOf[BenchmarkType])
+      try reportResult(this measure benchmark.asInstanceOf[SubBenchmark])
       catch { case e: Exception => reportResult(new ExceptionMeasurementFailure(e)) }
     }
     else {
@@ -46,13 +46,13 @@ trait MeasurementHarness[BenchmarkType <: BenchmarkBase.Benchmark] extends Objec
     }
   }
 
-  def measure(benchmark: BenchmarkType): MeasurementResult
+  def measure(benchmark: SubBenchmark): MeasurementResult
 
 }
 
 trait MeasurementHarnessFactory {
 
-  def apply(mode: BenchmarkMode): MeasurementHarness[_]
+  def apply(mode: Mode): MeasurementHarness[_]
 
 }
 
@@ -60,7 +60,7 @@ trait MeasurementHarnessFactory {
  */
 object MeasurementHarnessFactory extends MeasurementHarnessFactory {
 
-  def apply(mode: BenchmarkMode): MeasurementHarness[_] = mode match {
+  def apply(mode: Mode): MeasurementHarness[_] = mode match {
     case SteadyState => SteadyHarness
     case MemoryUsage => MemoryHarness
     case _           => throw new AlgorithmFlowException(this.getClass)

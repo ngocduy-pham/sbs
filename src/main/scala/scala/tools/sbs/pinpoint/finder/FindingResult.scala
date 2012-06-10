@@ -13,22 +13,22 @@ package pinpoint
 package finder
 
 import scala.collection.mutable.ArrayBuffer
-import scala.tools.sbs.benchmark.Benchmark
-import scala.tools.sbs.performance.regression.CIRegression
+import scala.tools.sbs.benchmark.BenchmarkBase.Benchmark
+import scala.tools.sbs.performance.CIRegression
 
 trait FindingResult extends ScrutinyResult {
 
-  def benchmark: PinpointBenchmark
+  def benchmark: Benchmark
 
   def benchmarkName = benchmark.name
 
 }
 
-case class Regression(benchmark: PinpointBenchmark,
-                      position: InvocationGraph,
-                      current: (Double, Double),
-                      previous: ArrayBuffer[(Double, Double)],
-                      CI: (Double, Double))
+case class RegressionPoint(benchmark: PinpointBenchmark.Benchmark,
+                           position: InvocationGraph,
+                           current: (Double, Double),
+                           previous: ArrayBuffer[(Double, Double)],
+                           CI: (Double, Double))
   extends FindingResult
   with CIRegression
   with ScrutinySuccess {
@@ -47,7 +47,7 @@ case class Regression(benchmark: PinpointBenchmark,
 
 }
 
-case class NoRegression(benchmark: PinpointBenchmark,
+case class NoRegression(benchmark: PinpointBenchmark.Benchmark,
                         confidenceLevel: Int,
                         current: (Double, Double),
                         previous: ArrayBuffer[(Double, Double)],

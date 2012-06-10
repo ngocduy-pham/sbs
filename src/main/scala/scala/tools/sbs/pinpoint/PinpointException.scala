@@ -17,10 +17,10 @@ import scala.tools.sbs.util.Constant
 
 class PinpointException(message: String) extends BenchmarkException(message)
 
-case class PinpointingMethodNotFoundException(benchmark: PinpointBenchmark)
+case class PinpointingMethodNotFoundException(benchmark: PinpointBenchmark.Benchmark)
   extends PinpointException(
-    "Pinpointing method " + benchmark.pinpointClass + "." + benchmark.pinpointMethod +
-      " not found in " + benchmark.pinpointClass)
+    "Pinpointing method " + benchmark.className + "." + benchmark.methodName +
+      " not found in " + benchmark.className)
 
 case class MismatchExpressionList(declaringClass: String,
                                   method: String,
@@ -39,7 +39,7 @@ case class RegressionUndetectableException(declaringClass: String,
       " to method call " + graph.last.prototype + " at the " + graph.endOrdinum + " time of its invocations" +
       " in method " + declaringClass + "." + method))
 
-case class NoPinpointingMethodException(benchmark: PinpointBenchmark)
+case class NoPinpointingMethodException(benchmark: PinpointBenchmark.Benchmark)
   extends PinpointException("No pinpointing method specified in " + benchmark.name)
 
 class ANOVAUnsupportedException extends PinpointException("Currently ANOVA test is unsupported")

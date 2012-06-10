@@ -16,15 +16,16 @@ import scala.tools.sbs.io.Log
 import scala.tools.sbs.performance.MeasurementHarnessFactory
 import scala.tools.sbs.performance.MeasurerFactory
 import scala.tools.sbs.pinpoint.ScrutinizerFactory
-import scala.tools.sbs.profiling.ProfilerFactory
+import scala.tools.sbs.profiling.Profiler
 
 /** Runs the benchmark for some purpose.
   */
-trait Runner extends Configured with RuntimeTypeChecker {
+trait Runner extends RuntimeTypeChecker {
+  self: Configured =>
 
   import BenchmarkBase.Benchmark
 
-  def benchmarkFactory: BenchmarkBase.Factory
+  def benchmarkFactory: BenchmarkBase#Factory
 
   /** Runs the benchmark and produces the benchmarking result.
     */
@@ -56,8 +57,8 @@ trait Runner extends Configured with RuntimeTypeChecker {
 
 object RunnerFactory {
 
-  def apply(config: Config, log: Log, mode: BenchmarkMode): Runner = mode match {
-    case Profiling                                => ProfilerFactory(config, log)
+  def apply(config: Config, log: Log, mode: Mode): Runner = mode match {
+    case Profiling                                => Profiler(config, log)
     case Pinpointing                              => ScrutinizerFactory(config, log)
     case StartUpState | SteadyState | MemoryUsage => MeasurerFactory(config, log, mode, MeasurementHarnessFactory)
     case _                                        => throw new NotSupportedBenchmarkMode(mode)

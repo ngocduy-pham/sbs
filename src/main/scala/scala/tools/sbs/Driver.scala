@@ -23,7 +23,7 @@ import scala.tools.sbs.util.FileUtil
   *
   * @author ND P
   */
-object BenchmarkDriver {
+object Driver {
 
   /** Start point of the benchmark driver.
     * Does the following:
@@ -133,7 +133,7 @@ object BenchmarkDriver {
     }
   }
 
-  def notify(each: BenchmarkResult, mode: BenchmarkMode) = {
+  def notify(each: BenchmarkResult, mode: Mode) = {
     val last = each match {
       case _: BenchmarkSuccess => "[  OK  ]"
       case _                   => "[FAILED]"

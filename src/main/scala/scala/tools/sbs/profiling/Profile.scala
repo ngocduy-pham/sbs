@@ -14,60 +14,56 @@ package profiling
 import scala.collection.mutable.ArrayBuffer
 
 /** Class holds the profiling result.
- */
+  */
 class Profile {
 
   /** All classes loaded in a benchmark running.
-   */
-  private val _classes = ArrayBuffer[LoadedClass]()
-
-  def classes = _classes
+    */
+  val classes = ArrayBuffer[LoadedClass]()
 
   def loadClass(name: String) {
-    _classes += LoadedClass(name)
+    classes += LoadedClass(name)
   }
 
   def loadClass(clazz: LoadedClass) {
-    _classes += clazz
+    classes += clazz
   }
 
   /** Number of boxing.
-   */
-  private var _boxing = 0
-
-  def boxing = _boxing
+    */
+  private var boxing = 0
 
   def box {
-    _boxing += 1
+    boxing += 1
   }
 
   /** Number of unboxing.
-   */
-  private var _unboxing = 0
-
-  def unboxing = _unboxing
+    */
+  private var unboxing = 0
 
   def unbox {
-    _unboxing += 1
+    unboxing += 1
   }
-
   /** Number of steps performed.
-   */
-  private var _steps = 0
-
-  def steps = _steps
+    */
+  private var steps = 0
 
   def performStep {
-    _steps += 1
+    steps += 1
   }
 
-  var _memoryActivity: MemoryActivity = _
-
-  def memoryActivity = _memoryActivity
+  private var memoryActivity: MemoryActivity = _
 
   def useMemory(usage: MemoryActivity) {
-    _memoryActivity = usage
+    memoryActivity = usage
   }
+
+  def toReport =
+    (classes flatMap (_.toReport)) ++
+      (if (steps > 0) ArrayBuffer("  all steps performed: " + steps) else Nil) ++
+      (if (boxing > 0) ArrayBuffer("  boxing: " + boxing) else Nil) ++
+      (if (unboxing > 0) ArrayBuffer("  unboxing: " + boxing) else Nil) ++
+      (if (memoryActivity != null) memoryActivity.toReport else Nil)
 
   def toXML =
     <profile>

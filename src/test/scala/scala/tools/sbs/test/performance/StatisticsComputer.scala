@@ -4,15 +4,15 @@ package performance
 package regression
 
 import scala.collection.mutable.ArrayBuffer
-import scala.tools.sbs.performance.regression.HistoryFactory
-import scala.tools.sbs.performance.regression.StatisticsFactory
+import scala.tools.sbs.performance.History
+import scala.tools.sbs.performance.Statistics
 import scala.tools.sbs.performance.Series
 
 import org.scalatest.Spec
 
 class StatisticsComputer extends Spec {
 
-  val computer = StatisticsFactory(testConfig, testLog)
+  val computer = Statistics(testConfig, testLog)
 
   describe("StatisticComputer") {
 
@@ -280,7 +280,7 @@ class StatisticsComputer extends Spec {
           310),
         99)
 
-      val history = HistoryFactory(DummyBenchmark, SteadyState)
+      val history = History(DummyBenchmark, SteadyState)
       history add previous
       val ret = computer.testDifference(DummyBenchmark, current, history)
       ret.toReport foreach println

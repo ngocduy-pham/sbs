@@ -17,10 +17,10 @@ import scala.tools.nsc.io.File
 
 class BenchmarkException(message: String) extends Exception(message)
 
-case class NotSupportedBenchmarkMode(mode: BenchmarkMode)
+case class NotSupportedBenchmarkMode(mode: Mode)
   extends BenchmarkException("Mode " + mode.description + " is currently not supported")
 
-case class WrongRunnerException(runner: Runner, mode: BenchmarkMode)
+case class WrongRunnerException(runner: Runner, mode: Mode)
   extends BenchmarkException("Wrong type of runner: " + runner.getClass.getName + " in mode: " + mode.description)
 
 case class AlgorithmFlowException(runner: Class[_]) extends BenchmarkException("Unpredicted flow in: " + runner.getName)

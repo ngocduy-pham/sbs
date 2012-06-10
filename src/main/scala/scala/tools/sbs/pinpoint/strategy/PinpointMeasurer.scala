@@ -20,7 +20,7 @@ import scala.tools.sbs.pinpoint.PinpointBenchmark
 
 trait PinpointMeasurer {
 
-  def measure(benchmark: PinpointBenchmark, classpathURLs: List[URL]): MeasurementResult
+  def measure(benchmark: PinpointBenchmark.Benchmark, classpathURLs: List[URL]): MeasurementResult
 
 }
 

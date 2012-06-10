@@ -15,10 +15,10 @@ import java.net.URL
 
 import scala.tools.nsc.io.Directory
 import scala.tools.sbs.io.Log
-import scala.tools.sbs.performance.regression.ANOVARegressionFailure
-import scala.tools.sbs.performance.regression.CIRegressionFailure
-import scala.tools.sbs.performance.regression.CIRegressionSuccess
-import scala.tools.sbs.performance.regression.RegressionFailure
+import scala.tools.sbs.performance.ANOVARegressionFailure
+import scala.tools.sbs.performance.CIRegressionFailure
+import scala.tools.sbs.performance.CIRegressionSuccess
+import scala.tools.sbs.performance.RegressionFailure
 import scala.tools.sbs.pinpoint.instrumentation.JavaUtility
 import scala.tools.sbs.pinpoint.strategy.InstrumentationRunner
 import scala.tools.sbs.pinpoint.strategy.PinpointMeasurerFactory
@@ -35,7 +35,7 @@ trait BinaryWrapper extends FinderWrapper {
     */
   class BinaryFinder(config: Config,
                      log: Log,
-                     benchmark: PinpointBenchmark,
+                     benchmark: PinpointBenchmark.Benchmark,
                      className: String,
                      methodName: String,
                      instrumentedPath: Directory,
@@ -62,7 +62,7 @@ trait BinaryWrapper extends FinderWrapper {
           */
         def currentRegression = regressionFailure match {
           case CIRegressionFailure(_, current, previous, ci) => {
-            Regression(
+            RegressionPoint(
               benchmark,
               graph,
               current,
@@ -133,7 +133,7 @@ trait BinaryWrapper extends FinderWrapper {
       measureCommon(graph, config.classpathURLs ++ benchmark.classpathURLs)
 
     private def measurePrevious(graph: InvocationGraph) = exploit(
-      benchmark.pinpointPrevious,
+      benchmark.previous,
       benchmark.context,
       config.classpathURLs ++ benchmark.classpathURLs,
       measureCommon(graph, _))

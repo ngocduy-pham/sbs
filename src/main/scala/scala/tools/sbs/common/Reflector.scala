@@ -15,7 +15,7 @@ import java.net.URL
 
 import scala.tools.nsc.io.Path
 import scala.tools.nsc.util.ScalaClassLoader
-import scala.tools.sbs.benchmark.BenchmarkTemplate
+import scala.tools.sbs.benchmark.Template
 import scala.tools.sbs.io.Log
 import scala.tools.sbs.util.Constant.COMPANION_FIELD
 import scala.tools.sbs.util.Constant.DOLLAR
@@ -31,7 +31,7 @@ trait Reflection {
   class SimpleReflector(config: Config, log: Log) extends Reflector {
 
     def getClass(name: String, classpathURLs: List[URL]): Class[_] = {
-      val classLoader = ScalaClassLoader.fromURLs(classpathURLs, classOf[BenchmarkTemplate].getClassLoader)
+      val classLoader = ScalaClassLoader.fromURLs(classpathURLs, classOf[Template].getClassLoader)
       classLoader tryToInitializeClass name getOrElse (throw new ClassNotFoundException(name))
     }
 

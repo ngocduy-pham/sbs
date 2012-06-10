@@ -25,7 +25,7 @@ trait InstrumentationRunner {
                           originalClasspathURLs: List[java.net.URL],
                           run: List[java.net.URL] => R): R = {
 
-    val instrumentor = CodeInstrumentor(config, log, benchmark.pinpointExclude)
+    val instrumentor = CodeInstrumentor(config, log, benchmark.exclude)
     val (clazz, method) = instrumentor.getClassAndMethod(className, methodName, originalClasspathURLs)
     if (method == null) throw new PinpointingMethodNotFoundException(benchmark)
     instrument(method, instrumentor)

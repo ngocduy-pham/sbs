@@ -17,7 +17,7 @@ import scala.tools.sbs.pinpoint.instrumentation.CodeInstrumentor
 
 trait ScrutinyRegressionDetector {
 
-  def detect(benchmark: PinpointBenchmark): ScrutinyRegressionResult
+  def detect(benchmark: PinpointBenchmark.Benchmark): ScrutinyRegressionResult
 
 }
 
@@ -25,7 +25,7 @@ object ScrutinyRegressionDetectorFactory {
 
   def apply(config: Config,
             log: Log,
-            benchmark: PinpointBenchmark,
+            benchmark: PinpointBenchmark.Benchmark,
             instrumented: Directory,
             backup: Directory): ScrutinyRegressionDetector =
     new MethodRegressionDetector(config, log, benchmark, instrumented, backup)

@@ -14,7 +14,7 @@ package finder
 
 import java.net.URL
 import scala.tools.nsc.io.Directory
-import scala.tools.sbs.common.JVMInvokerFactory
+import scala.tools.sbs.common.JVMInvoker
 import scala.tools.sbs.common.RunOnlyHarness
 import scala.tools.sbs.io.Log
 import scala.tools.sbs.pinpoint.instrumentation.JavaUtility
@@ -24,7 +24,7 @@ import scala.tools.sbs.pinpoint.strategy.InstrumentationUtility
 
 class InvocationCollector(val config: Config,
                           val log: Log,
-                          val benchmark: PinpointBenchmark,
+                          val benchmark: PinpointBenchmark.Benchmark,
                           val className: String,
                           val methodName: String,
                           val instrumentedPath: Directory,
@@ -42,7 +42,7 @@ class InvocationCollector(val config: Config,
   val currentGraph: InvocationGraph = collect(config.classpathURLs ++ benchmark.classpathURLs)
 
   val previousGraph: InvocationGraph = exploit(
-    benchmark.pinpointPrevious,
+    benchmark.previous,
     benchmark.context,
     config.classpathURLs ++ benchmark.classpathURLs,
     collect)
@@ -70,7 +70,7 @@ class InvocationCollector(val config: Config,
           "<signature>" + signature + "	</signature>" +
           "</call>"))
 
-    val invoker = JVMInvokerFactory(log, config)
+    val invoker = JVMInvoker(log, config)
 
     instrumentAndRun(
       (method, instrumentor) => {

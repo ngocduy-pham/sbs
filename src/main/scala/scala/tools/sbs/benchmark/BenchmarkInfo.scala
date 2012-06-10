@@ -30,7 +30,6 @@ case class BenchmarkInfo(name: String,
                          shouldCompile: Boolean) {
 
   import BenchmarkBase.Benchmark
-  import BenchmarkBase.Factory
   import common.BenchmarkCompiler.Compiler
 
   def isCompiledOK(compiler: Compiler, config: Config): Boolean =
@@ -42,7 +41,7 @@ case class BenchmarkInfo(name: String,
       true
     }
 
-  def expand(factory: Factory, config: Config): Benchmark = factory createFrom this
+  def expand(factory: BenchmarkBase#Factory, config: Config): Benchmark = factory createFrom this
 
 }
 
@@ -69,9 +68,9 @@ class InfoPack {
 
   private var modes = ArrayBuffer[InfoMode]()
 
-  def switchMode(mode: BenchmarkMode) = modes :+= new InfoMode(mode)
+  def switchMode(mode: Mode) = modes :+= new InfoMode(mode)
 
-  def apply(mode: BenchmarkMode) = modes find (_.mode == mode) get
+  def apply(mode: Mode) = modes find (_.mode == mode) get
 
   private def currentMode = modes.last
 
@@ -101,7 +100,7 @@ class InfoPack {
 
 }
 
-class InfoMode(val mode: BenchmarkMode) {
+class InfoMode(val mode: Mode) {
 
   private var _infos = ArrayBuffer[BenchmarkInfo]()
 

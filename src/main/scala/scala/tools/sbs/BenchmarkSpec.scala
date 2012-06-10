@@ -36,7 +36,7 @@ trait BenchmarkSpec extends Spec with Meta.StdOpts with Interpolation {
     |   - values overriden from templates with the initializable benchmark
     |  Benchmark mode:""".stripMargin)
 
-  protected var _modes: List[BenchmarkMode] = Nil
+  protected var _modes: List[Mode] = Nil
                               "steady-performance"  / "Benchmarking in steady state"     --> (_modes ::= SteadyState)
                               "startup-performance" / "Benchmarking in startup state"    --> (_modes ::= StartUpState)
                               "memory-usage"        / "Measuring memory usage"           --> (_modes ::= MemoryUsage)
@@ -73,12 +73,11 @@ trait BenchmarkSpec extends Spec with Meta.StdOpts with Interpolation {
   val shouldStep    = "profile-step"   / "whether to profile number of steps performed" --?
 
   heading             ("Per-benchmark names for pinpointing regression detection:")
-  val pinpointClass  = "classname"  / "the insterested class"  defaultTo ""
-  val pinpointMethod = "pinpoint-method" / "the insterested method" defaultTo ""
+  import pinpoint.PinpointBenchmark._
+  val className                 = classNameOpt  / "the insterested class"  defaultTo ""
 
   val pinpointBottleneckDectect = "regression-point" / "whether to find the regression point" --?
-
-  protected val _previous       = "previous" / "location of the previous build" defaultTo ".previous"
+  protected val _previous       = previousOpt / "location of the previous build" defaultTo ".previous"
                                   ""         / "  should not be included in classpath"
 
   heading                          ("Specifying paths and additional values, ~ means sbs root:")

@@ -60,7 +60,7 @@ case class ProcessMeasurementFailure(exitValue: Int) extends MeasurementFailure 
 
 }
 
-case class UnsupportedBenchmarkMeasurementFailure(benchmark: BenchmarkBase.Benchmark, mode: BenchmarkMode)
+case class UnsupportedBenchmarkMeasurementFailure(benchmark: BenchmarkBase.Benchmark, mode: Mode)
   extends MeasurementFailure {
 
   def reason = "Benchmark " + benchmark.name + " unsupports benchmarking mode: " + mode.description

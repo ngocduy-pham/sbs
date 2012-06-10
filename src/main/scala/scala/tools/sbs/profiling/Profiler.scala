@@ -17,16 +17,17 @@ import scala.tools.sbs.io.Log
 /** Trait for some kinds of profiling.
   */
 trait Profiler extends Runner {
+  self: Configured =>
 
-  protected val upperBound = manifest[ProfBenchmark]
+  protected val upperBound = manifest[ProfBenchmark.Benchmark]
 
   val benchmarkFactory = ProfBenchmark.factory(log, config)
 
   protected def doBenchmarking(benchmark: Benchmark): BenchmarkResult = {
-    profile(benchmark.asInstanceOf[ProfBenchmark])
+    profile(benchmark.asInstanceOf[ProfBenchmark.Benchmark])
   }
 
-  protected def profile(benchmark: ProfBenchmark): ProfilingResult
+  protected def profile(benchmark: ProfBenchmark.Benchmark): ProfilingResult
 
   /** Do nothing method.
     */
@@ -34,10 +35,8 @@ trait Profiler extends Runner {
 
 }
 
-object ProfilerFactory {
+object Profiler {
 
-  def apply(config: Config, log: Log): Profiler = {
-    new JDIProfiler(config, log)
-  }
+  def apply(config: Config, log: Log): Profiler = new JDIProfiler(config, log)
 
 }

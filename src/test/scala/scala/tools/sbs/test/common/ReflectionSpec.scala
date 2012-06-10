@@ -7,7 +7,7 @@ import scala.tools.nsc.io.Path
 import scala.tools.nsc.util.ClassPath
 import scala.tools.nsc.Global
 import scala.tools.nsc.Settings
-import scala.tools.sbs.common.Reflector
+import scala.tools.sbs.common.Reflection
 import scala.tools.sbs.util.FileUtil
 
 import org.scalatest.BeforeAndAfter
@@ -61,7 +61,7 @@ class ReflectorSpec extends Spec with BeforeAndAfter with BeforeAndAfterAll {
     compile(out)
   }
 
-  val reflector = Reflector(testConfig, testLog)
+  val reflector = Reflection(testConfig, testLog)
 
   override def afterAll = FileUtil clean testDir
 

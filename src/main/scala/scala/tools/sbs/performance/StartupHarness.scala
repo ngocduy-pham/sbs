@@ -17,10 +17,10 @@ import scala.tools.sbs.common.JVMInvoker
 import scala.tools.sbs.io.Log
 
 /** Measurer for benchmarking on startup state.
- */
-class StartupHarness(val log: Log, val config: Config) extends Measurer {
+  */
+class StartupHarness(val log: Log, val config: Config) extends Measurer with Configured {
 
-  override protected val mode: BenchmarkMode = StartUpState
+  override protected val mode: Mode = StartUpState
 
   def measure(benchmark: PerfBenchmark.Benchmark): MeasurementResult = {
     log.info("[Benchmarking startup state]")

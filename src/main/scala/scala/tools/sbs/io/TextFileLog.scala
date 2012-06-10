@@ -49,7 +49,7 @@ object TextFileLog {
   /** Creates a new file for logging whose name in the format:
    *  YYYYMMDD.hhmmss.Benchmark.log
    */
-  def createLog(benchmarkName: String, mode: BenchmarkMode, benchmarkDir: Directory): Option[File] = {
+  def createLog(benchmarkName: String, mode: Mode, benchmarkDir: Directory): Option[File] = {
     var logInit = new ArrayBuffer[String]
     val date = new Date
     logInit += "Logging for " + benchmarkName + " on " +

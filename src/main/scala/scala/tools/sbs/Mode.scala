@@ -19,7 +19,7 @@ package scala.tools.sbs
  *  <li>Pinpointing
  *  </ul>
  */
-trait BenchmarkMode {
+trait Mode {
 
   /** Path from benchmark directory to save logs,
    *  and from history directory to save measurement results.
@@ -33,7 +33,7 @@ trait BenchmarkMode {
 /** Used for reporting error on compiling results and
  *  benchmarks that run independently from mode.
  */
-object DummyMode extends BenchmarkMode {
+object DummyMode extends Mode {
 
   val location = "dummy"
 
@@ -43,7 +43,7 @@ object DummyMode extends BenchmarkMode {
 
 }
 
-object StartUpState extends BenchmarkMode {
+object StartUpState extends Mode {
 
   val location = "startup"
 
@@ -53,7 +53,7 @@ object StartUpState extends BenchmarkMode {
 
 }
 
-object SteadyState extends BenchmarkMode {
+object SteadyState extends Mode {
 
   val location = "steady"
 
@@ -63,7 +63,7 @@ object SteadyState extends BenchmarkMode {
 
 }
 
-object MemoryUsage extends BenchmarkMode {
+object MemoryUsage extends Mode {
 
   val location = "memory"
 
@@ -73,7 +73,7 @@ object MemoryUsage extends BenchmarkMode {
 
 }
 
-object Profiling extends BenchmarkMode {
+object Profiling extends Mode {
 
   val location = "profile"
 
@@ -83,7 +83,7 @@ object Profiling extends BenchmarkMode {
 
 }
 
-object Pinpointing extends BenchmarkMode {
+object Pinpointing extends Mode {
 
   val location = "pinpoint"
 

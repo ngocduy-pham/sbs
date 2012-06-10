@@ -17,9 +17,9 @@ import scala.tools.sbs.pinpoint.finder.BinaryWrapper
 import scala.tools.sbs.pinpoint.finder.DiggingWrapper
 import scala.tools.sbs.pinpoint.finder.FinderFactory
 
-class MethodScrutinizer(val config: Config, val log: Log) extends Scrutinizer {
+class MethodScrutinizer(val config: Config, val log: Log) extends Scrutinizer with Configured {
 
-  def scrutinize(benchmark: PinpointBenchmark): ScrutinyResult = {
+  def scrutinize(benchmark: PinpointBenchmark.Benchmark): ScrutinyResult = {
 
     val instrumentedPath = config.bin / ".instrumented" createDirectory ()
     val storage = config.bin / ".backup" createDirectory ()
@@ -34,8 +34,8 @@ class MethodScrutinizer(val config: Config, val log: Log) extends Scrutinizer {
             config,
             log,
             benchmark,
-            benchmark.pinpointClass,
-            benchmark.pinpointMethod,
+            benchmark.className,
+            benchmark.methodName,
             instrumentedPath,
             storage) find ()
         }
