@@ -33,8 +33,13 @@ trait JDI {
     val connectorName = "com.sun.jdi.CommandLineLaunch"
 
     def launch(benchmark: ProfBenchmark.Benchmark): VirtualMachine = {
+      val invoker      = JVMInvoker(log, config)
+      val classpath    = config.classpathURLs ++ benchmark.classpathURLs
       val javaArgument =
-        JVMInvoker(log, config).asJavaArgument(benchmark, config.classpathURLs ++ benchmark.classpathURLs)
+        if (benchmark.howToLaunch.isLeft)
+          invoker.asJavaArgument(benchmark.howToLaunch.left.get, benchmark, classpath)
+        else
+          invoker.asJavaArgument(benchmark, classpath)
 
       log.debug("profile command: " + (javaArgument mkString " "))
 
@@ -50,8 +55,7 @@ trait JDI {
       */
     def connectorArguments(connector: LaunchingConnector, mainArgs: String): JMap[String, Connector.Argument] = {
       val arguments = connector.defaultArguments
-
-      val mainArg = arguments get "main"
+      val mainArg   = arguments get "main"
       if (mainArg == null) {
         throw new Exception("bad launching connector")
       }
@@ -86,7 +90,7 @@ trait JDI {
       while (connected) {
         try {
           val eventSet = queue.remove
-          val iter = eventSet.eventIterator
+          val iter     = eventSet.eventIterator
           while (iter hasNext) {
             iter.nextEvent match {
               case vde: VMDeathEvent => {
@@ -101,6 +105,7 @@ trait JDI {
         }
         catch { case _: InterruptedException => () }
       }
+      connected = false
     }
 
     protected def vmDisconnectEvent() {

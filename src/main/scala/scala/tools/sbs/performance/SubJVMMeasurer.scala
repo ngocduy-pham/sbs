@@ -30,12 +30,12 @@ class SubJVMMeasurer(val log: Log,
   def measure(benchmark: PerfBenchmark.Benchmark): MeasurementResult =
     measure(benchmark, config.classpathURLs ++ benchmark.classpathURLs)
 
-  /** Lauches a new process with a {@link MeasurementHarness} runs a
+  /** Launches a new process with a {@link MeasurementHarness} runs a
     * {@link scala.tools.sbs.performance.PerformanceBenchmark}.
     * User classes will be loaded from the given `classpathURLs`.
     */
   def measure(benchmark: PerfBenchmark.Benchmark, classpathURLs: List[URL]): MeasurementResult = {
-    val invoker = JVMInvoker(log, config)
+    val invoker         = JVMInvoker(log, config)
     val (result, error) = invoker.invoke(
       invoker.command(measurementHarness, benchmark, classpathURLs),
       line => try scala.xml.XML loadString line

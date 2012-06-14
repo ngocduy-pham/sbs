@@ -88,8 +88,8 @@ trait JVMInvoker {
 
       log.debug("Invoked command: " + (command mkString " "))
 
-      val result = ArrayBuffer[R]()
-      val error = ArrayBuffer[E]()
+      val result         = ArrayBuffer[R]()
+      val error          = ArrayBuffer[E]()
       val processBuilder = Process(command)
 
       val processIO = new ProcessIO(

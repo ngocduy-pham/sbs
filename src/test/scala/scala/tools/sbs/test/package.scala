@@ -11,7 +11,7 @@ import scala.tools.sbs.performance.Series
 
 package object test {
 
-  val testDir = Directory("D:/University/5thYear/Internship/Working/sbs/sbs.test").createDirectory()
+  val testDir = Directory("D:/Enjoy/scala/sbs/benchmark/test").createDirectory()
   val args = Array(
     "--benchmarkdir",
     testDir.path,
@@ -20,6 +20,7 @@ package object test {
     "--measurement",
     "31",
     "--verbose",
+    "--debug",
     "--steady-performance",
     "test.Benchmark")
   val testConfig = new Config(args)

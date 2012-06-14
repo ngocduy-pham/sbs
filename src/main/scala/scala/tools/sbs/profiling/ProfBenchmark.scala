@@ -17,9 +17,10 @@ import java.net.URL
 import scala.tools.nsc.io.Path
 import scala.tools.sbs.benchmark.BenchmarkBase
 import scala.tools.sbs.benchmark.BenchmarkInfo
+import scala.tools.sbs.common.ObjectHarness
 import scala.tools.sbs.common.Reflection
+import scala.tools.sbs.common.RunOnlyHarness
 import scala.tools.sbs.io.Log
-import scala.tools.sbs.util.Constant
 
 trait ProfBenchmark extends BenchmarkBase {
 
@@ -42,7 +43,11 @@ trait ProfBenchmark extends BenchmarkBase {
                 context: ClassLoader,
                 config: Config)
     extends super.Snippet(name, arguments, classpathURLs, src, timeout, context, method, config)
-    with Benchmark
+    with Benchmark {
+
+    val howToLaunch = Right(this)
+
+  }
 
   class Initializable(name: String,
                       classpathURLs: List[URL],
@@ -53,10 +58,11 @@ trait ProfBenchmark extends BenchmarkBase {
     extends super.Initializable(name, classpathURLs, src, context, benchmarkObject, config)
     with Benchmark {
 
-    val classes    = benchmarkObject.classes
-    val exclude    = benchmarkObject.exclude
-    val methodName = benchmarkObject.methodName
-    val fieldName  = benchmarkObject.fieldName
+    val classes     = benchmarkObject.classes
+    val exclude     = benchmarkObject.exclude
+    val methodName  = benchmarkObject.methodName
+    val fieldName   = benchmarkObject.fieldName
+    val howToLaunch = Left(RunOnlyHarness)
 
   }
 
@@ -92,12 +98,18 @@ object ProfBenchmark extends ProfBenchmark {
       */
     def fieldName: String
 
+    /** How java runs this benchmark independently to sbs.
+      * Snippet benchmarks can run on themselves with the method main.
+      * Initializable benchmarks are loaded and run by an ObjectHarness. 
+      */
+    def howToLaunch: Either[ObjectHarness, Benchmark]
+
   }
 
-  def factory(log: Log, config: Config) = new Factory with Configured {
+  def factory(_log: Log, _config: Config) = new Factory with Configured {
 
-    val log: Log       = log
-    val config: Config = config
+    val log: Log       = _log
+    val config: Config = _config
 
     def createFrom(info: BenchmarkInfo): Benchmark = {
       val argMap = BenchmarkInfo.readInfo(

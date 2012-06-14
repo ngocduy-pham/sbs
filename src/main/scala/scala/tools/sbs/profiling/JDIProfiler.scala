@@ -104,7 +104,7 @@ class JDIProfiler(val config: Config, val log: Log) extends Profiler with JDI wi
 
     /** This class keeps context on events in one thread.
       */
-    class JDIThreadTrace(profile: Profile, thread: ThreadReference, jvm: VirtualMachine) {
+    class ThreadTrace(profile: Profile, thread: ThreadReference, jvm: VirtualMachine) {
 
       /** Instruction steps of methods in call stack.
         */
@@ -236,7 +236,7 @@ class JDIProfiler(val config: Config, val log: Log) extends Profiler with JDI wi
 
     /** Maps ThreadReference to ThreadTrace instances.
       */
-    private val traceMap = new HashMap[ThreadReference, JDIThreadTrace]()
+    private val traceMap = new HashMap[ThreadReference, ThreadTrace]()
 
     /** Run the event handling thread. As long as we are connected, get event
       * sets off the queue and dispatch the events within them.
@@ -303,16 +303,12 @@ class JDIProfiler(val config: Config, val log: Log) extends Profiler with JDI wi
 
       /** Returns the JDIThreadTrace instance for the specified thread, creating one if needed.
         */
-      def threadTrace(thread: ThreadReference): JDIThreadTrace = {
-        traceMap.get(thread) match {
-          case None => {
-            val ret = new JDIThreadTrace(profile, thread, jvm)
-            traceMap.put(thread, ret)
-            ret
-          }
-          case Some(trace) => trace
+      def threadTrace(thread: ThreadReference): ThreadTrace =
+        traceMap get thread getOrElse {
+          val ret = new ThreadTrace(profile, thread, jvm)
+          traceMap.put(thread, ret)
+          ret
         }
-      }
 
       /** A new class has been loaded.
         * <ul>

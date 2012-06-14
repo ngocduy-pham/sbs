@@ -6,7 +6,7 @@ scalaVersion := "2.9.1"
 
 scalacOptions += "-deprecation"
 
-mainClass in (Compile, run) := Some("scala.tools.sbs.BenchmarkDriver")
+mainClass in (Compile, run) := Some("scala.tools.sbs.Driver")
 
 libraryDependencies <+= scalaVersion( "org.scala-lang" % "scala-compiler" % _ )
 
@@ -17,3 +17,5 @@ libraryDependencies += "org.scalatest" % "scalatest_2.9.1" % "1.6.1"
 libraryDependencies += "javassist" % "javassist" % "3.12.1.GA"
 
 libraryDependencies += "org.apache.ant" % "ant" % "1.8.2"
+
+target := new java.io.File("D:/Enjoy/scala/sbs/target")

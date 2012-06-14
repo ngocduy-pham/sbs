@@ -15,25 +15,25 @@ import scala.compat.Platform
 import scala.tools.sbs.io.Log
 
 /** Runs and measures metrics of a benchmark in general case.
- */
+  */
 class SeriesAchiever(config: Config, log: Log) {
 
   /** Warms the benchmark up if necessary and measures the desired metric.
-   *
-   *  @param	checkWarm	The function checking whether the benchmark has reached steady state
-   *  @param measure	The thunk to calculate the desired metric
-   *
-   *  @return	The result if success, otherwies a `String` describes the reason.
-   */
+    *
+    * @param	checkWarm	The function checking whether the benchmark has reached steady state
+    * @param measure	The thunk to calculate the desired metric
+    *
+    * @return	The result if success, otherwies a `String` describes the reason.
+    */
   def achieve(benchmark: PerfBenchmark.Benchmark,
-          checkWarm: Series => Boolean,
-          measure: () => Long,
-          newlyAchieve: Boolean = true): MeasurementResult = {
+              checkWarm: Series => Boolean,
+              measure: () => Long,
+              newlyAchieve: Boolean = true): MeasurementResult = {
 
-    var series       = new Series(config, log)
-    var unwarmable   = false
-    val warmMax      = benchmark.measurement * config.warmRepeat
-    var warmCount    = 0
+    var series = new Series(config, log)
+    var unwarmable = false
+    val warmMax = benchmark.measurement * config.warmRepeat
+    var warmCount = 0
     var measureCount = 0
 
     def getSeries {
@@ -55,7 +55,7 @@ class SeriesAchiever(config: Config, log: Log) {
         series.remove(0)
         cleanUp()
         series += measure()
-        
+
         log.verbose("    Measured      " + series.last)
 
         warmCount += 1
@@ -85,7 +85,7 @@ class SeriesAchiever(config: Config, log: Log) {
   }
 
   /** Forces the Java gc to clean up the heap.
-   */
+    */
   def cleanUp() {
     Platform.collectGarbage
     //    System.runFinalization

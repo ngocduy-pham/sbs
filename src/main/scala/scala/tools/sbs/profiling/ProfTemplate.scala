@@ -17,7 +17,7 @@ trait ProfTemplate extends Template {
 
   val classes: List[String] = Nil
 
-  val exclude: List[String] = Nil
+  val exclude: List[String] = List("java.*", "javax.*", "sun.*", "com.sun.*", "scala.*")
 
   val methodName = ""
 

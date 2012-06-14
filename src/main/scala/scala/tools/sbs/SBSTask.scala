@@ -9,7 +9,6 @@
  */
 
 package scala.tools.sbs
-package ant
 
 import org.apache.tools.ant.Task
 

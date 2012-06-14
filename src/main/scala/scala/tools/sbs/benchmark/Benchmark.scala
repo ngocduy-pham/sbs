@@ -246,10 +246,10 @@ object BenchmarkBase extends BenchmarkBase {
 
   }
 
-  def factory(log: Log, config: Config) = new Factory with Configured {
+  def factory(_log: Log, _config: Config) = new Factory with Configured {
 
-    val log: Log = log
-    val config: Config = config
+    val log: Log = _log
+    val config: Config = _config
 
     def createFrom(info: BenchmarkInfo): Benchmark = load(
       info,

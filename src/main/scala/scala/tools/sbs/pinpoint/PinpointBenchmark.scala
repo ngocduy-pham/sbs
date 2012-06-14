@@ -19,11 +19,10 @@ import scala.tools.nsc.io.Directory
 import scala.tools.nsc.io.Path
 import scala.tools.sbs.benchmark.BenchmarkInfo
 import scala.tools.sbs.common.Reflection
+import scala.tools.sbs.common.RunOnlyHarness
 import scala.tools.sbs.io.Log
 import scala.tools.sbs.performance.PerfBenchmark
 import scala.tools.sbs.profiling.ProfBenchmark
-
-import PinpointBenchmark.Benchmark
 
 trait PinpointBenchmark extends PerfBenchmark with ProfBenchmark {
 
@@ -60,7 +59,12 @@ trait PinpointBenchmark extends PerfBenchmark with ProfBenchmark {
       config,
       multiplier,
       measurement,
-      sampleNumber) with Benchmark { val fieldName = "" }
+      sampleNumber) with Benchmark {
+
+    val fieldName   = ""
+    val howToLaunch = Right(this)
+
+  }
 
   class Initializable(name: String,
                       classpathURLs: List[URL],
@@ -76,12 +80,13 @@ trait PinpointBenchmark extends PerfBenchmark with ProfBenchmark {
       context,
       config) with Benchmark {
 
-    val className  = benchmarkObject.className
-    val methodName = benchmarkObject.methodName
-    val fieldName  = ""
-    val exclude    = benchmarkObject.exclude
-    val previous   = benchmarkObject.previous
-    val depth      = benchmarkObject.depth
+    val className   = benchmarkObject.className
+    val methodName  = benchmarkObject.methodName
+    val fieldName   = ""
+    val exclude     = benchmarkObject.exclude
+    val previous    = benchmarkObject.previous
+    val depth       = benchmarkObject.depth
+    val howToLaunch = Left(RunOnlyHarness)
 
   }
 
@@ -115,10 +120,10 @@ object PinpointBenchmark extends PinpointBenchmark {
 
   }
 
-  def factory(log: Log, config: Config) = new Factory with Configured {
+  def factory(_log: Log, _config: Config) = new Factory with Configured {
 
-    val log: Log = log
-    val config: Config = config
+    val log: Log = _log
+    val config: Config = _config
 
     def createFrom(info: BenchmarkInfo): Benchmark = {
       val argMap = BenchmarkInfo.readInfo(info.src, List(
