@@ -20,7 +20,6 @@ package object test {
     "--measurement",
     "31",
     "--verbose",
-    "--debug",
     "--steady-performance",
     "test.Benchmark")
   val testConfig = new Config(args)
