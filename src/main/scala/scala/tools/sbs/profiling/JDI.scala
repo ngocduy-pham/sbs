@@ -34,7 +34,7 @@ trait JDI {
 
     def launch(benchmark: ProfBenchmark.Benchmark): VirtualMachine = {
       val invoker      = JVMInvoker(log, config)
-      val classpath    = config.classpathURLs ++ benchmark.classpathURLs
+      val classpath    = config.classpathURLs ++ benchmark.info.classpathURLs
       val javaArgument =
         if (benchmark.howToLaunch.isLeft)
           invoker.asJavaArgument(benchmark.howToLaunch.left.get, benchmark, classpath)

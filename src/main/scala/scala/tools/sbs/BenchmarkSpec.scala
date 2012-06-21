@@ -43,7 +43,7 @@ trait BenchmarkSpec extends Spec with Meta.StdOpts with Interpolation {
                               "profile"             / "Profiling"                        --> (_modes ::= Profiling)
                               "pinpoint"            / "Pinpointing regression detection" --> (_modes ::= Pinpointing)
                               "all"                 / "run all benchmarking modes"       -->
-                              (_modes = List(SteadyState, StartUpState,MemoryUsage,Profiling,Pinpointing))
+                              (_modes = List(SteadyState, StartUpState, MemoryUsage, Profiling, Pinpointing))
 
   heading                   ("Statistics metrics:")
   val leastConfidenceLevel = "least-confidence-level" / "smallest acceptable confidence level"     defaultTo 90

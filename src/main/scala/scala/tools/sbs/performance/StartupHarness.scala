@@ -25,7 +25,7 @@ class StartupHarness(val log: Log, val config: Config) extends Measurer with Con
   def measure(benchmark: PerfBenchmark.Benchmark): MeasurementResult = {
     log.info("[Benchmarking startup state]")
 
-    val command   = JVMInvoker(log, config).command(benchmark, config.classpathURLs ++ benchmark.classpathURLs)
+    val command   = JVMInvoker(log, config).command(benchmark, config.classpathURLs ++ benchmark.info.classpathURLs)
     val process   = Process(command)
     val exitValue = process !
 

@@ -28,27 +28,21 @@ trait PerfBenchmark extends BenchmarkBase {
   type subSnippet       <: subBenchmark
   type subInitializable <: subBenchmark
 
-  class Snippet(name: String,
-                arguments: List[String],
-                classpathURLs: List[URL],
-                src: Path,
-                timeout: Int,
+  class Snippet(info: BenchmarkInfo,
                 method: Method,
                 context: ClassLoader,
                 config: Config,
                 val multiplier: Int,
                 val measurement: Int,
                 val sampleNumber: Int)
-    extends super.Snippet(name, arguments, classpathURLs, src, timeout, context, method, config)
+    extends super.Snippet(info, context, method, config)
     with Benchmark
 
-  class Initializable(name: String,
-                      classpathURLs: List[URL],
-                      src: Path,
+  class Initializable(info: BenchmarkInfo,
                       benchmarkObject: PerfTemplate,
                       context: ClassLoader,
                       config: Config)
-    extends super.Initializable(name, classpathURLs, src, context, benchmarkObject, config)
+    extends super.Initializable(info, context, benchmarkObject, config)
     with Benchmark {
 
     val multiplier   = 1
@@ -78,37 +72,41 @@ object PerfBenchmark extends PerfBenchmark {
 
   }
 
-  def factory(_log: Log, _config: Config) = new Factory with Configured {
+  private var factory: Option[Factory] = None
 
-    val log: Log       = _log
-    val config: Config = _config
+  def factory(_log: Log, _config: Config) = factory getOrElse {
 
-    def createFrom(info: BenchmarkInfo): Benchmark = {
-      val argMap = BenchmarkInfo.readInfo(info.src, List(multiplierOpt, measurementOpt, sampleOpt) map toOption)
-      load(
-        info,
-        (method: Method, context: ClassLoader) => new Snippet(
-          info.name,
-          info.arguments,
-          info.classpathURLs,
-          info.src,
-          info.timeout,
-          method,
-          context,
-          config,
-          getIntoOrElse(argMap get multiplierOpt, stringToInt, config.multiplier),
-          getIntoOrElse(argMap get measurementOpt, stringToInt, config.measurement),
-          getIntoOrElse(argMap get sampleOpt, stringToInt, 0)),
-        (context: ClassLoader) => new Initializable(
-          info.name,
-          info.classpathURLs,
-          info.src,
-          Reflection(config, log).getObject[PerfTemplate](info.name, config.classpathURLs ++ info.classpathURLs),
-          context,
-          config),
-        classOf[PerfTemplate].getName)
+    val newFactory = new Factory with Configured {
+
+      val log: Log = _log
+      val config: Config = _config
+
+      def createFrom(info: BenchmarkInfo): Benchmark = {
+        val argMap = BenchmarkInfo.readInfo(
+          argFromSrc(info.src),
+          List(multiplierOpt, measurementOpt, sampleOpt) map toOption)
+        load(
+          info,
+          (method: Method, context: ClassLoader) => new Snippet(
+            info,
+            method,
+            context,
+            config,
+            getIntoOrElse(argMap get multiplierOpt, stringToInt, config.multiplier),
+            getIntoOrElse(argMap get measurementOpt, stringToInt, config.measurement),
+            getIntoOrElse(argMap get sampleOpt, stringToInt, 0)),
+          (context: ClassLoader) => new Initializable(
+            info,
+            Reflection(config, log).getObject[PerfTemplate](info.name, config.classpathURLs ++ info.classpathURLs),
+            context,
+            config),
+          classOf[PerfTemplate].getName)
+      }
+
     }
 
+    factory = Some(newFactory)
+    newFactory
   }
 
 }

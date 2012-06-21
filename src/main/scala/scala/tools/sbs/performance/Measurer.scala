@@ -64,7 +64,7 @@ trait Measurer extends Runner {
             log.verbose("--got " + i + " sample(s)--")
           }
           else {
-            log.debug("--cannot store " + benchmark.name)
+            log.debug("--cannot store " + benchmark.info.name)
           }
         case failure: MeasurementFailure => log.debug("--generation error at " + i + ": " + failure.reason + "--")
         case _                           => throw new Error("WTF is just created?")

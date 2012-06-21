@@ -57,13 +57,13 @@ trait JVMInvoker {
     /** `-cp <classpath from config; classpath from benchmark> Benchmark`
       */
     private def asBenchmark(benchmark: Benchmark, classpathURLs: List[URL]) =
-      asScalaClasspath(classpathURLs) ++ Seq(benchmark.name)
+      asScalaClasspath(classpathURLs) ++ Seq(benchmark.info.name)
 
     /** `-cp <scala-library.jar, scala-compiler.jar> -Dscala.home=<scala-home> scala.tools.nsc.MainGenericRunner
       * -cp <classpath from config; classpath from benchmark> Benchmark benchmark.arguments`
       */
     def asJavaArgument(benchmark: Benchmark, classpathURLs: List[URL]) =
-      asScala(classpathURLs) ++ asBenchmark(benchmark, classpathURLs) ++ benchmark.arguments
+      asScala(classpathURLs) ++ asBenchmark(benchmark, classpathURLs) ++ benchmark.info.arguments
 
     /** `-cp <scala-library.jar, scala-compiler.jar> -Dscala.home=<scala-home> scala.tools.nsc.MainGenericRunner
       * -cp <classpath from config; classpath from benchmark> Runner benchmark.toXML config.args`
@@ -72,7 +72,7 @@ trait JVMInvoker {
     def asJavaArgument(harness: ObjectHarness, benchmark: Benchmark, classpathURLs: List[URL]) =
       asScala(classpathURLs) ++
         asHarness(harness, benchmark, classpathURLs) ++
-        Seq(scala.xml.Utility.trim(benchmark.toXML).toString) ++
+        Seq(scala.xml.Utility.trim(benchmark.info.toXML).toString) ++
         config.args
 
     def command(harness: ObjectHarness, benchmark: Benchmark, classpathURLs: List[URL]) =

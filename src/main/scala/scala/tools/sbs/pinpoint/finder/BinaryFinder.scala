@@ -130,12 +130,12 @@ trait BinaryWrapper extends FinderWrapper {
     }
 
     private def measureCurrent(graph: InvocationGraph) =
-      measureCommon(graph, config.classpathURLs ++ benchmark.classpathURLs)
+      measureCommon(graph, config.classpathURLs ++ benchmark.info.classpathURLs)
 
     private def measurePrevious(graph: InvocationGraph) = exploit(
       benchmark.previous,
       benchmark.context,
-      config.classpathURLs ++ benchmark.classpathURLs,
+      config.classpathURLs ++ benchmark.info.classpathURLs,
       measureCommon(graph, _))
 
     private def measureCommon(graph: InvocationGraph, classpathURLs: List[URL]) =

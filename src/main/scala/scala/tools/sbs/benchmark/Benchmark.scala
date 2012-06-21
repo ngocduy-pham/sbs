@@ -37,11 +37,7 @@ trait BenchmarkBase {
   /** An implement of {@link Benchmark} trait.
     * `method` is the `main(args: Array[String])` method of the benchmark `object`.
     */
-  class Snippet(val name: String,
-                val arguments: List[String],
-                val classpathURLs: List[URL],
-                val src: Path,
-                val timeout: Int,
+  class Snippet(val info: BenchmarkInfo,
                 val context: ClassLoader,
                 method: Method,
                 config: Config) extends Benchmark {
@@ -55,33 +51,20 @@ trait BenchmarkBase {
     private val oldContext = Thread.currentThread.getContextClassLoader
 
     def init()  = Thread.currentThread.setContextClassLoader(context)
-    def run()   = method.invoke(null, Array(arguments.toArray: AnyRef): _*)
+    def run()   = method.invoke(null, Array(info.arguments.toArray: AnyRef): _*)
     def reset() = Thread.currentThread.setContextClassLoader(oldContext)
 
-    def createLog(mode: Mode) = LogFactory(name, mode, config)
-
-    def toXML =
-      <SnippetBenchmark>
-        <name>{ name }</name>
-        <arguments>{ for (arg <- arguments) yield <arg>{ arg }</arg> }</arguments>
-        <classpath>{ for (cp <- classpathURLs) yield <cp> { cp.getPath } </cp> }</classpath>
-        <src>{ src.path }</src>
-      </SnippetBenchmark>
+    def createLog(mode: Mode) = LogFactory(info.name, mode, config)
 
   }
 
   /** Represents benchmarks that have to be initialized before performance check.
     * `benchmarkObject`: The actual benchmark loaded using reflection.
     */
-  class Initializable(val name: String,
-                      val classpathURLs: List[URL],
-                      val src: Path,
+  class Initializable(val info: BenchmarkInfo,
                       val context: ClassLoader,
                       benchmarkObject: Template,
                       config: Config) extends Benchmark {
-
-    val arguments = List[String]()
-    val timeout   = benchmarkObject.timeout
 
     /** Current class loader context.
       */
@@ -99,14 +82,7 @@ trait BenchmarkBase {
       benchmarkObject.reset
     }
 
-    def createLog(mode: Mode) = LogFactory(name, mode, config)
-
-    def toXML =
-      <InitializableBenchmark>
-        <name>{ name }</name>
-        <classpath>{ for (cp <- classpathURLs) yield <cp> { cp.getPath } </cp> }</classpath>
-        <src>{ src.path }</src>
-      </InitializableBenchmark>
+    def createLog(mode: Mode) = LogFactory(info.name, mode, config)
 
   }
 
@@ -157,14 +133,7 @@ trait BenchmarkBase {
     /** Creates a `Benchmark` from a xml element representing it.
       */
     def createFrom(xml: Elem): subBenchmark =
-      try createFrom(
-        new BenchmarkInfo(
-          (xml \\ "name").text,
-          Path(xml \\ "src" text),
-          (xml \\ "arg") map (_.text) toList,
-          (xml \\ "cp") map (cp => Path(cp.text).toURL) toList,
-          0,
-          false))
+      try createFrom(new BenchmarkInfo(xml))
       catch {
         case c: ClassCastException => {
           log.error(c.toString)
@@ -179,15 +148,6 @@ trait BenchmarkBase {
           throw new Exception("Getting benchmark from super process failed")
         }
       }
-
-    def getIntoOrElse[R](arg: Option[String], convert: String => R, default: => R): R = arg match {
-      case Some(str) => convert(str)
-      case _         => default
-    }
-
-    val stringToInt            = (str: String) => str.toInt
-    val stringToList           = (str: String) => str split Constant.COLON toList
-    def toOption(name: String) = Constant.ARG + name
 
   }
 
@@ -206,19 +166,9 @@ object BenchmarkBase extends BenchmarkBase {
 
   trait Benchmark {
 
-    def name: String
-
-    /** Arguments of the benchmark.
+    /** Information about the benchmark.
       */
-    def arguments: List[String]
-
-    /** Classpath necessary to run the benchmark.
-      */
-    def classpathURLs: List[URL]
-
-    /** Maximum time for each benchmarking, default to 15 seconds.
-      */
-    def timeout: Int
+    val info: BenchmarkInfo
 
     /** Creates the logging object for each benchmark.
       */
@@ -240,39 +190,37 @@ object BenchmarkBase extends BenchmarkBase {
       */
     def context: ClassLoader
 
-    /** Produces a XML element representing this benchmark.
-      */
-    def toXML: scala.xml.Elem
-
   }
 
-  def factory(_log: Log, _config: Config) = new Factory with Configured {
+  private var factory: Option[Factory] = None
 
-    val log: Log = _log
-    val config: Config = _config
+  def factory(_log: Log, _config: Config) = factory getOrElse {
 
-    def createFrom(info: BenchmarkInfo): Benchmark = load(
-      info,
-      (method: Method, context: ClassLoader) => new Snippet(
-        info.name,
-        info.arguments,
-        info.classpathURLs,
-        info.src,
-        info.timeout,
-        context,
-        method,
-        config
-      ),
-      (context: ClassLoader) => new Initializable(
-        info.name,
-        info.classpathURLs,
-        info.src,
-        context,
-        Reflection(config, log).getObject[Template](info.name, config.classpathURLs ++ info.classpathURLs),
-        config
-      ),
-      classOf[Template].getName)
+    val newFactory = new Factory with Configured {
 
+      val log: Log = _log
+      val config: Config = _config
+
+      def createFrom(info: BenchmarkInfo): Benchmark = load(
+        info,
+        (method: Method, context: ClassLoader) => new Snippet(
+          info,
+          context,
+          method,
+          config
+        ),
+        (context: ClassLoader) => new Initializable(
+          info,
+          context,
+          Reflection(config, log).getObject[Template](info.name, config.classpathURLs ++ info.classpathURLs),
+          config
+        ),
+        classOf[Template].getName)
+
+    }
+
+    factory = Some(newFactory)
+    newFactory
   }
 
 }

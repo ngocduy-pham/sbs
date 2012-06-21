@@ -24,7 +24,7 @@ abstract class RegressionSuccess(benchmark: Benchmark)
   with BenchmarkSuccess {
 
   def confidenceLevel: Int
-  def benchmarkName = benchmark.name
+  def benchmarkName = benchmark.info.name
 
 }
 
@@ -92,14 +92,14 @@ case class ANOVARegressionSuccess(benchmark: Benchmark,
 case class NoPreviousMeasurement(benchmark: Benchmark, measurementSuccess: MeasurementSuccess)
   extends RegressionResult with BenchmarkSuccess {
 
-  def benchmarkName = benchmark.name
+  def benchmarkName = benchmark.info.name
   def toReport      = ArrayBuffer(Constant.INDENT + "No previous measurement result to detect regression")
 
 }
 
 abstract class RegressionFailure(benchmark: Benchmark) extends RegressionResult with BenchmarkFailure {
 
-  def benchmarkName = benchmark.name
+  def benchmarkName = benchmark.info.name
 
 }
 

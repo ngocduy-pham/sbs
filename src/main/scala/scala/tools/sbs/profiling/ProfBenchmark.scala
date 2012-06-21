@@ -30,11 +30,7 @@ trait ProfBenchmark extends BenchmarkBase {
   type subSnippet       <: subBenchmark
   type subInitializable <: subBenchmark
 
-  class Snippet(name: String,
-                arguments: List[String],
-                classpathURLs: List[URL],
-                src: Path,
-                timeout: Int,
+  class Snippet(info: BenchmarkInfo,
                 val classes: List[String],
                 val exclude: List[String],
                 val methodName: String,
@@ -42,20 +38,18 @@ trait ProfBenchmark extends BenchmarkBase {
                 method: Method,
                 context: ClassLoader,
                 config: Config)
-    extends super.Snippet(name, arguments, classpathURLs, src, timeout, context, method, config)
+    extends super.Snippet(info, context, method, config)
     with Benchmark {
 
     val howToLaunch = Right(this)
 
   }
 
-  class Initializable(name: String,
-                      classpathURLs: List[URL],
-                      src: Path,
+  class Initializable(info: BenchmarkInfo,
                       benchmarkObject: ProfTemplate,
                       context: ClassLoader,
                       config: Config)
-    extends super.Initializable(name, classpathURLs, src, context, benchmarkObject, config)
+    extends super.Initializable(info, context, benchmarkObject, config)
     with Benchmark {
 
     val classes     = benchmarkObject.classes
@@ -106,40 +100,42 @@ object ProfBenchmark extends ProfBenchmark {
 
   }
 
-  def factory(_log: Log, _config: Config) = new Factory with Configured {
+  private var factory: Option[Factory] = None
 
-    val log: Log       = _log
-    val config: Config = _config
+  def factory(_log: Log, _config: Config) = factory getOrElse {
 
-    def createFrom(info: BenchmarkInfo): Benchmark = {
-      val argMap = BenchmarkInfo.readInfo(
-        info.src,
-        List(classesOpt, excludeOpt, methodNameOpt, fieldNameOpt) map toOption)
-      load(
-        info,
-        (method: Method, context: ClassLoader) => new Snippet(
-          info.name,
-          info.arguments,
-          info.classpathURLs,
-          info.src,
-          info.timeout,
-          getIntoOrElse(argMap get classesOpt, stringToList, config.classes),
-          getIntoOrElse(argMap get excludeOpt, stringToList, config.exclude),
-          argMap getOrElse (methodNameOpt, config.methodName),
-          argMap getOrElse (fieldNameOpt, config.fieldName),
-          method,
-          context,
-          config),
-        (context: ClassLoader) => new Initializable(
-          info.name,
-          info.classpathURLs,
-          info.src,
-          Reflection(config, log).getObject[ProfTemplate](info.name, config.classpathURLs ++ info.classpathURLs),
-          context,
-          config),
-        classOf[ProfTemplate].getName)
+    val newFactory = new Factory with Configured {
+
+      val log: Log = _log
+      val config: Config = _config
+
+      def createFrom(info: BenchmarkInfo): Benchmark = {
+        val argMap = BenchmarkInfo.readInfo(
+          argFromSrc(info.src),
+          List(classesOpt, excludeOpt, methodNameOpt, fieldNameOpt) map toOption)
+        load(
+          info,
+          (method: Method, context: ClassLoader) => new Snippet(
+            info,
+            getIntoOrElse(argMap get classesOpt, stringToList, config.classes),
+            getIntoOrElse(argMap get excludeOpt, stringToList, config.exclude),
+            argMap getOrElse (methodNameOpt, config.methodName),
+            argMap getOrElse (fieldNameOpt, config.fieldName),
+            method,
+            context,
+            config),
+          (context: ClassLoader) => new Initializable(
+            info,
+            Reflection(config, log).getObject[ProfTemplate](info.name, config.classpathURLs ++ info.classpathURLs),
+            context,
+            config),
+          classOf[ProfTemplate].getName)
+      }
+
     }
 
+    factory = Some(newFactory)
+    newFactory
   }
 
 }

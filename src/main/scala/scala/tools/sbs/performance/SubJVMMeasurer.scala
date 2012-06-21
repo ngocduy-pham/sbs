@@ -28,7 +28,7 @@ class SubJVMMeasurer(val log: Log,
   /** Measures with default classpath as `config.classpathURLs ++ benchmark.classpathURLs`.
     */
   def measure(benchmark: PerfBenchmark.Benchmark): MeasurementResult =
-    measure(benchmark, config.classpathURLs ++ benchmark.classpathURLs)
+    measure(benchmark, config.classpathURLs ++ benchmark.info.classpathURLs)
 
   /** Launches a new process with a {@link MeasurementHarness} runs a
     * {@link scala.tools.sbs.performance.PerformanceBenchmark}.
@@ -45,7 +45,7 @@ class SubJVMMeasurer(val log: Log,
           null
       },
       line => line,
-      benchmark.timeout)
+      benchmark.info.timeout)
     if (error.length > 0) {
       error foreach log.error
       ExceptionMeasurementFailure(new Exception(error mkString "\n"))

@@ -14,7 +14,7 @@ import org.scalatest.BeforeAndAfter
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.Spec
 
-class ReflectorSpec extends Spec with BeforeAndAfter with BeforeAndAfterAll {
+class ReflectionSpec extends Spec with BeforeAndAfter with BeforeAndAfterAll {
 
   val name = "A"
 

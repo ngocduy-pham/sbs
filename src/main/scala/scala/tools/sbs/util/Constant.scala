@@ -15,18 +15,12 @@ package util
   */
 object Constant {
 
-  val ARG = "--"
-
-  val COLON = System getProperty "path.separator"
-
-  val SLASH = System getProperty "file.separator"
-
-  val ENDL = System getProperty "line.separator"
-
-  val INDENT = "         "
-
-  val DOLLAR = "$"
-
+  val ARG             = "--"
+  val COLON           = System getProperty "path.separator"
+  val SLASH           = System getProperty "file.separator"
+  val ENDL            = System getProperty "line.separator"
+  val INDENT          = "         "
+  val DOLLAR          = "$"
   val COMPANION_FIELD = "MODULE$"
 
 }

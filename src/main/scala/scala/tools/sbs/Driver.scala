@@ -102,7 +102,7 @@ object Driver {
       log.info("[Start benchmarking]")
       benchmarks /*filter (_.sampleNumber == 0)*/ foreach (benchmark => {
 
-        log.info("Benchmark: " + benchmark.name)
+        log.info("Benchmark: " + benchmark.info.name)
         log.debug("Benchmark: " + benchmark.getClass.getName)
 
         try {
@@ -114,7 +114,7 @@ object Driver {
           case e: Exception => {
             log.info("[    Run FAILED    ]")
 
-            resultPack add new ExceptionBenchmarkFailure(benchmark.name, e)
+            resultPack add new ExceptionBenchmarkFailure(benchmark.info.name, e)
           }
         }
       })

@@ -20,7 +20,7 @@ trait FindingResult extends ScrutinyResult {
 
   def benchmark: Benchmark
 
-  def benchmarkName = benchmark.name
+  def benchmarkName = benchmark.info.name
 
 }
 

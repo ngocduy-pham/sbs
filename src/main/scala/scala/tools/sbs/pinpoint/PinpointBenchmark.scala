@@ -32,11 +32,7 @@ trait PinpointBenchmark extends PerfBenchmark with ProfBenchmark {
   type subSnippet       <: subBenchmark
   type subInitializable <: subBenchmark
 
-  class Snippet(name: String,
-                arguments: List[String],
-                classpathURLs: List[URL],
-                src: Path,
-                timeout: Int,
+  class Snippet(info: BenchmarkInfo,
                 multiplier: Int,
                 measurement: Int,
                 sampleNumber: Int,
@@ -49,11 +45,7 @@ trait PinpointBenchmark extends PerfBenchmark with ProfBenchmark {
                 context: ClassLoader,
                 config: Config)
     extends super[PerfBenchmark].Snippet(
-      name,
-      arguments,
-      classpathURLs,
-      src,
-      timeout,
+      info,
       method,
       context,
       config,
@@ -66,16 +58,12 @@ trait PinpointBenchmark extends PerfBenchmark with ProfBenchmark {
 
   }
 
-  class Initializable(name: String,
-                      classpathURLs: List[URL],
-                      src: Path,
+  class Initializable(info: BenchmarkInfo,
                       benchmarkObject: PinpointTemplate,
                       context: ClassLoader,
                       config: Config)
     extends super[PerfBenchmark].Initializable(
-      name,
-      classpathURLs,
-      src,
+      info,
       benchmarkObject,
       context,
       config) with Benchmark {
@@ -120,51 +108,52 @@ object PinpointBenchmark extends PinpointBenchmark {
 
   }
 
-  def factory(_log: Log, _config: Config) = new Factory with Configured {
+  private var factory: Option[Factory] = None
 
-    val log: Log = _log
-    val config: Config = _config
+  def factory(_log: Log, _config: Config) = factory getOrElse {
 
-    def createFrom(info: BenchmarkInfo): Benchmark = {
-      val argMap = BenchmarkInfo.readInfo(info.src, List(
-        classNameOpt,
-        methodNameOpt,
-        fieldNameOpt,
-        excludeOpt,
-        multiplierOpt,
-        measurementOpt,
-        sampleOpt,
-        previousOpt,
-        depthOpt))
-      load(
-        info,
-        (method: Method, context: ClassLoader) => new Snippet(
-          info.name,
-          info.arguments,
-          info.classpathURLs,
-          info.src,
-          info.timeout,
-          getIntoOrElse(argMap get multiplierOpt, stringToInt, config.multiplier),
-          getIntoOrElse(argMap get measurementOpt, stringToInt, config.measurement),
-          getIntoOrElse(argMap get sampleOpt, stringToInt, 0),
-          argMap getOrElse (classNameOpt, config.className),
-          argMap getOrElse (methodNameOpt, config.methodName),
-          getIntoOrElse(argMap get excludeOpt, stringToList, config.exclude),
-          getIntoOrElse(argMap get previousOpt, s => Directory(s), config.previous),
-          getIntoOrElse(argMap get depthOpt, stringToInt, 1),
-          method,
-          context,
-          config),
-        (context: ClassLoader) => new Initializable(
-          info.name,
-          info.classpathURLs,
-          info.src,
-          Reflection(config, log).getObject[PinpointTemplate](info.name, config.classpathURLs ++ info.classpathURLs),
-          context,
-          config),
-        classOf[PinpointTemplate].getName)
+    val newFactory = new Factory with Configured {
+      val log: Log = _log
+      val config: Config = _config
+
+      def createFrom(info: BenchmarkInfo): Benchmark = {
+        val argMap = BenchmarkInfo.readInfo(argFromSrc(info.src), List(
+          classNameOpt,
+          methodNameOpt,
+          fieldNameOpt,
+          excludeOpt,
+          multiplierOpt,
+          measurementOpt,
+          sampleOpt,
+          previousOpt,
+          depthOpt))
+        load(
+          info,
+          (method: Method, context: ClassLoader) => new Snippet(
+            info,
+            getIntoOrElse(argMap get multiplierOpt, stringToInt, config.multiplier),
+            getIntoOrElse(argMap get measurementOpt, stringToInt, config.measurement),
+            getIntoOrElse(argMap get sampleOpt, stringToInt, 0),
+            argMap getOrElse (classNameOpt, config.className),
+            argMap getOrElse (methodNameOpt, config.methodName),
+            getIntoOrElse(argMap get excludeOpt, stringToList, config.exclude),
+            getIntoOrElse(argMap get previousOpt, s => Directory(s), config.previous),
+            getIntoOrElse(argMap get depthOpt, stringToInt, 1),
+            method,
+            context,
+            config),
+          (context: ClassLoader) => new Initializable(
+            info,
+            Reflection(config, log).getObject[PinpointTemplate](info.name, config.classpathURLs ++ info.classpathURLs),
+            context,
+            config),
+          classOf[PinpointTemplate].getName)
+      }
+
     }
 
+    factory = Some(newFactory)
+    newFactory
   }
 
 }

@@ -50,27 +50,25 @@ trait DiggingWrapper extends FinderWrapper {
 
       val instrumentor = CodeInstrumentor(config, log, benchmark.exclude)
 
-      val invocationCollector = new InvocationCollector(
+      val invocationCollector = new InvocationRecorder(
         config,
         log,
         benchmark,
-        declaringClass,
-        diggingMethod,
         instrumentedPath,
         storagePath)
 
       val currentMethod = instrumentor.getMethod(
         diggingMethod,
         declaringClass,
-        config.classpathURLs ++ benchmark.classpathURLs)
+        config.classpathURLs ++ benchmark.info.classpathURLs)
 
       log.info("Finding Regression in: " + currentMethod.getLongName)
       log.info("")
 
-      if (invocationCollector.graph.length == 0) {
+      if (invocationCollector.currentGraph.length == 0) {
         log.info("  No detectable method call found")
         log.info("")
-        throw new RegressionUndetectableException(declaringClass, diggingMethod, invocationCollector.graph)
+        throw new RegressionUndetectableException(declaringClass, diggingMethod, invocationCollector.currentGraph)
       }
 
       log.debug("Not empty calling list from: " + currentMethod.getLongName)
@@ -89,7 +87,7 @@ trait DiggingWrapper extends FinderWrapper {
         diggingMethod,
         instrumentedPath,
         storagePath,
-        invocationCollector.graph) find ()
+        invocationCollector.currentGraph) find ()
 
       currentLevelRegression.toReport foreach (line => {
         log.info(line)

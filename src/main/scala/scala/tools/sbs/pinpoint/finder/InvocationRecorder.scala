@@ -30,6 +30,7 @@ import com.sun.jdi.event.VMDeathEvent
 import com.sun.jdi.event.VMDisconnectEvent
 import com.sun.jdi.event.VMStartEvent
 import com.sun.jdi.request.EventRequest
+import com.sun.jdi.request.EventRequestManager
 import com.sun.jdi.ThreadReference
 import com.sun.jdi.VMDisconnectedException
 import com.sun.jdi.VirtualMachine
@@ -49,14 +50,12 @@ class InvocationRecorder(val config: Config,
   val className  = benchmark.className
   val methodName = benchmark.methodName
 
-  def isMatchOK: Boolean  = currentGraph matches previousGraph
-
-  val currentGraph: InvocationGraph  = record(config.classpathURLs ++ benchmark.classpathURLs)
-
-  lazy val previousGraph: InvocationGraph = exploit(
+  def isMatchOK          = currentGraph matches previousGraph
+  val currentGraph       = record(config.classpathURLs ++ benchmark.info.classpathURLs)
+  lazy val previousGraph = exploit(
     benchmark.previous,
     benchmark.context,
-    config.classpathURLs ++ benchmark.classpathURLs,
+    config.classpathURLs ++ benchmark.info.classpathURLs,
     record)
 
   private def record(classpathURLs: List[URL]): InvocationGraph = {
@@ -65,21 +64,21 @@ class InvocationRecorder(val config: Config,
     def reportException(exc: Exception): InvocationGraph = {
       log.error(exc.toString)
       log.error(exc.getStackTraceString)
-      jvm.exit(1)
+      jvm exit 1
       new InvocationGraph
     }
 
     if (benchmark.className.isEmpty || benchmark.methodName.isEmpty)
       new InvocationGraph
     else
-      try new Handler(jvm) handle
+      try new Handler(jvm.eventRequestManager) handle jvm
       catch {
         case exc: IOException => reportException(new IOException("unable to launch target VM: " + exc))
         case exc: Exception   => reportException(exc)
       }
   }
 
-  class Handler(jvm: VirtualMachine) extends super.Handler[InvocationGraph] {
+  class Handler(eventRequestManager: EventRequestManager) extends super.Handler[InvocationGraph] {
 
     /** Maps ThreadReference to ThreadTrace instances.
       */
@@ -89,7 +88,7 @@ class InvocationRecorder(val config: Config,
       */
     protected val graph = new InvocationGraph
 
-    private val eventRequestManager   = jvm.eventRequestManager
+    private val pinpointClassRequest  = eventRequestManager.createClassPrepareRequest
     private val pinpointMethodRequest = eventRequestManager.createMethodEntryRequest
     private val methodEntryRequest    = eventRequestManager.createMethodEntryRequest
     private val methodExitRequest     = eventRequestManager.createMethodExitRequest
@@ -112,16 +111,18 @@ class InvocationRecorder(val config: Config,
 
       def classPrepareEvent(event: ClassPrepareEvent) {
         log.verbose("prepare " + event.referenceType)
+        eventRequestManager deleteEventRequest pinpointClassRequest
+
         pinpointMethodRequest setSuspendPolicy EventRequest.SUSPEND_ALL
-        pinpointMethodRequest enable
+        pinpointMethodRequest.enable
       }
 
       def methodEntryEvent(event: MethodEntryEvent) {
-        val clazz  = event.method.declaringType.name
+        val clazz = event.method.declaringType.name
         val method = event.method.name
 
         if (pinpointMethodRequest.isEnabled) {
-          if ((method equals benchmark.methodName) && (clazz equals benchmark.className)) {
+          if ((method equals methodName) && (clazz equals className)) {
             log.verbose("enter inspected method " + clazz + "." + method)
 
             pinpointThread = Some(thread)
@@ -137,9 +138,7 @@ class InvocationRecorder(val config: Config,
         }
         else {
           layer += 1
-          if (layer == 1) {
-            graph.add(clazz, method, event.method.signature)
-          }
+          if (layer == 1) graph.add(clazz, method, event.method.signature)
           log.verbose("enter " + clazz + "." + method + " [layer: " + layer + "]")
         }
       }
@@ -162,12 +161,10 @@ class InvocationRecorder(val config: Config,
 
     }
 
-    def handle(jvm: VirtualMachine) = handle()
-
     /** Run the event handling thread. As long as we are connected, get event
       * sets off the queue and dispatch the events within them.
       */
-    def handle(): InvocationGraph = {
+    def handle(jvm: VirtualMachine): InvocationGraph = {
       setInitRequests()
       jvm.resume
       val queue = jvm.eventQueue
@@ -201,10 +198,9 @@ class InvocationRecorder(val config: Config,
       tdr setSuspendPolicy EventRequest.SUSPEND_ALL
       tdr enable
 
-      val cpr = eventRequestManager.createClassPrepareRequest
-      cpr addClassFilter benchmark.className
-      cpr setSuspendPolicy EventRequest.SUSPEND_ALL
-      cpr enable
+      pinpointClassRequest addClassFilter benchmark.className
+      pinpointClassRequest setSuspendPolicy EventRequest.SUSPEND_ALL
+      pinpointClassRequest enable
     }
 
     /** Dispatch incoming events
@@ -212,7 +208,6 @@ class InvocationRecorder(val config: Config,
     private def handleEvent(event: Event) {
       def traceOrElse(event: Event { def thread(): ThreadReference }) {
         if (pinpointThread isDefined) {
-//          log.verbose(pinpointThread.get + " " + event.thread)
           if (event.thread == pinpointThread.get) {
             (traceMap get pinpointThread.get get) handle event
           }
@@ -236,14 +231,11 @@ class InvocationRecorder(val config: Config,
 
     /** Returns the JDIThreadTrace instance for the specified thread, creating one if needed.
       */
-    def threadTrace(thread: ThreadReference): ThreadTrace = {
-      traceMap get thread getOrElse {
+    def threadTrace(thread: ThreadReference): ThreadTrace =
+      traceMap.getOrElseUpdate(thread, {
         log.verbose("<new thread>")
-        val ret = new ThreadTrace(thread)
-        traceMap += (thread -> ret)
-        ret
-      }
-    }
+        new ThreadTrace(thread)
+      })
 
   }
 

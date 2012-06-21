@@ -20,45 +20,88 @@ import scala.tools.nsc.io.Path
 import scala.tools.sbs.common.BenchmarkCompiler
 import scala.tools.sbs.io.UI
 
-/** Holds the information of benchmarks before compiling.
+/** Contains information about the benchmark which include:
+  * <ul> benchmark's name
+  * <li> location of the source files
+  * <li> arguments for the benchmark main
+  * <li> classpath necessary to run the benchmark
+  * <li> maximum time for each benchmarking, default to 15 seconds
+  * <li> whether to recompile the benchmark classes
+  * </ul>
   */
 case class BenchmarkInfo(name: String,
                          src: Path,
                          arguments: List[String],
                          classpathURLs: List[URL],
                          timeout: Int,
-                         shouldCompile: Boolean) {
+                         notCompile: Boolean) {
+
+  def this(xml: scala.xml.Elem) {
+    this(
+      (xml \\ "name").text,
+      Path(xml \\ "src" text),
+      (xml \\ "arg") map (_.text) toList,
+      (xml \\ "cp") map (cp => Path(cp.text).toURL) toList,
+      (xml \\ "timeout").text toInt,
+      (xml \\ "notcompile").text toBoolean)
+  }
+
+  /** Produces a XML element representing this benchmark.
+    */
+  val toXML =
+    <benchmark>
+      <name>{ name }</name>
+      <src>{ src.path }</src>
+      <arguments>{ for (arg <- arguments) yield <arg>{ arg }</arg> }</arguments>
+      <classpath>{ for (cp <- classpathURLs) yield <cp> { cp.getPath } </cp> }</classpath>
+      <timeout>{ timeout }</timeout>
+      <notcompile>{ notCompile }</notcompile>
+    </benchmark>
 
   import BenchmarkBase.Benchmark
   import common.BenchmarkCompiler.Compiler
 
+  /** Compiles the benchmark using given compiler.
+    *
+    * @return
+    *        true  if compile OK
+    *        false otherwise
+    */
   def isCompiledOK(compiler: Compiler, config: Config): Boolean =
-    if (shouldCompile && !(compiler compile this)) {
-      UI.error("Compile failed: " + this.name + " src: " + src.path)
+    if (!notCompile && !(compiler compile this)) {
+      UI.error("compile failed: " + this.name + " src: " + src.path)
       false
     }
     else {
       true
     }
 
+  /** Creates the benchmark represented by this info.
+    */
   def expand(factory: BenchmarkBase#Factory, config: Config): Benchmark = factory createFrom this
 
 }
 
 object BenchmarkInfo {
 
-  def readInfo(src: Path, options: List[String]): HashMap[String, String] = {
-    val argFile =
-      if (src isFile) (src.path stripSuffix "scala") + "arg"
-      else src.path + ".arg"
+  val srcOpt          = "src"
+  val argumentsOpt    = "arguments"
+  val classpathOpt    = "classpath"
+  val timeoutOpt      = "timeout"
+  val noncompileOpt   = "noncompile"
+
+  /** `--` is automatically prepend to any option.
+    * Pass the list of option names only.
+    */
+  def readInfo(argFile: String, options: List[String]): HashMap[String, String] = {
     val map = HashMap[String, String]()
     try {
       val argBuffer = Source.fromFile(argFile)
       for (line <- argBuffer.getLines; option <- options)
-        if (line startsWith option) map put (option, (line split " ")(1))
+        if (line startsWith toOption(option)) map put (option, line dropWhile (_ != ' ') drop 1)
       argBuffer close
     }
-    catch { case e => UI.debug("[Read failed] " + argFile + "\n" + e.toString) }
+    catch { case e => UI.debug("[read failed] " + argFile + "\n" + e.toString) }
     map
   }
 

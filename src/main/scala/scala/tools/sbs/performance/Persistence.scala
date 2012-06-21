@@ -35,7 +35,7 @@ trait Persistence {
     */
   class FileBasedPersistor(log: Log, config: Config, benchmark: Benchmark, mode: Mode) extends Persistor {
 
-    val location: Directory = FileUtil.mkDir(config.history / mode.location / benchmark.name) match {
+    val location: Directory = FileUtil.mkDir(config.history / mode.location / benchmark.info.name) match {
       case Left(dir) => dir
       case Right(s) => {
         log.error(s)
@@ -136,7 +136,7 @@ trait Persistence {
           case _       => ""
         }
       }
-      FileUtil.createFile(location.path + directory, benchmark.name + "." + mode.toString + ".xml") match {
+      FileUtil.createFile(location.path + directory, benchmark.info.name + "." + mode.toString + ".xml") match {
         case Some(xmlFile) => {
           log.info("Result stored OK into " + xmlFile.path)
           XML.save(xmlFile.path, runSuccess.toXML, "UTF-8", true, null)

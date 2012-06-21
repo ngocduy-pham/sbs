@@ -67,12 +67,12 @@ class MethodRegressionDetector(val config: Config,
       failure => ScrutinyImmeasurableFailure(benchmark, failure))
   }
 
-  private lazy val measureCurrent = measureCommon(config.classpathURLs ++ benchmark.classpathURLs)
+  private lazy val measureCurrent = measureCommon(config.classpathURLs ++ benchmark.info.classpathURLs)
 
   private lazy val measurePrevious = exploit(
     benchmark.previous,
     benchmark.context,
-    config.classpathURLs ++ benchmark.classpathURLs,
+    config.classpathURLs ++ benchmark.info.classpathURLs,
     measureCommon)
 
   private def measureCommon(classpathURLs: List[URL]) = instrumentAndRun(

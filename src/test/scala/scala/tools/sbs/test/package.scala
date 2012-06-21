@@ -8,10 +8,13 @@ import scala.tools.sbs.io.UI
 import scala.tools.sbs.performance.MeasurementSuccess
 import scala.tools.sbs.performance.PerfBenchmark
 import scala.tools.sbs.performance.Series
+import scala.tools.sbs.benchmark.BenchmarkInfo
+import scala.tools.sbs.performance.MeasurementSuccess
+import scala.tools.sbs.performance.MeasurementSuccess
 
 package object test {
 
-  val testDir = Directory("D:/Enjoy/scala/sbs/benchmark/test").createDirectory()
+  val testDir = Directory("D:/Enjoy/Scala/sbs/benchmark/test").createDirectory()
   val args = Array(
     "--benchmarkdir",
     testDir.path,
@@ -28,10 +31,14 @@ package object test {
   val testLog = LogFactory(testConfig)
 
   object DummyBenchmark extends PerfBenchmark.Benchmark {
-    override def name = "dummy"
-    def src = testDir
-    def arguments = List[String]()
-    def classpathURLs = testConfig.classpathURLs
+    val info: BenchmarkInfo = new BenchmarkInfo(
+      "dummy",
+      testDir,
+      Nil,
+      testConfig.classpathURLs,
+      45000,
+      true
+    )
     def multiplier = 1
     def measurement = 10
     def sampleNumber = 0
@@ -50,7 +57,6 @@ package object test {
     def pinpointMethod = "run"
     def pinpointExclude = List("")
     def pinpointPrevious = Directory("")
-    def toXML: scala.xml.Elem = <null/>
   }
 
   val about5k5Arr = ArrayBuffer[Long](5527, 5549, 5601, 5566, 5481, 5487, 5547, 5484, 5542, 5485, 5587)

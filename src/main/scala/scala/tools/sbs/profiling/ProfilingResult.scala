@@ -23,7 +23,7 @@ trait ProfilingResult extends BenchmarkResult
 case class ProfilingSuccess(benchmark: Benchmark, profile: Profile)
   extends BenchmarkSuccess with ProfilingResult {
 
-  def benchmarkName = benchmark.name
+  def benchmarkName = benchmark.info.name
 
   def toReport = profile.toReport
 
@@ -32,7 +32,7 @@ case class ProfilingSuccess(benchmark: Benchmark, profile: Profile)
 trait ProfilingFailure extends BenchmarkFailure with ProfilingResult
 
 class ProfilingException(val benchmark: Benchmark, exception: Exception)
-  extends ExceptionBenchmarkFailure(benchmark.name, exception) with ProfilingFailure
+  extends ExceptionBenchmarkFailure(benchmark.info.name, exception) with ProfilingFailure
 
 object ProfilingException {
 
