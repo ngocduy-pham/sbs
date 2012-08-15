@@ -33,7 +33,7 @@ class BenchmarkParsingSpec extends Spec {
       expect(Directory("D:/University/5thYear/Internship/Working/benchmark/bin").toCanonical.path)(conf.bin.path)
       expect(31)(conf.measurement)
       expect(11)(conf.multiplier)
-      expect(true)(conf.shouldCompile)
+      expect(false)(conf.notCompile)
       expect(List(Profiling, SteadyState))(conf.modes)
     }
 
