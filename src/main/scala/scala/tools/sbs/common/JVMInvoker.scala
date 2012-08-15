@@ -13,6 +13,8 @@ package common
 
 import java.net.URL
 
+import scala.actors.Actor
+import scala.actors.TIMEOUT
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 import scala.sys.process.Process
@@ -38,11 +40,10 @@ trait JVMInvoker {
 
     /** `-cp <scala-library.jar, scala-compiler.jar> -Dscala=<scala-home> scala.tools.nsc.MainGenericRunner`
       */
-    private def asScala(classpathURLs: List[URL]) =
-      Seq(
-        "-cp",
-        ClassPath.fromURLs(classpathURLs ++ List(config.scalaLibraryJar.toURL, config.scalaCompilerJar.toURL): _*)) ++
-        Seq(config.javaProp, "scala.tools.nsc.MainGenericRunner")
+    private def asScala(classpathURLs: List[URL]): Seq[String] = Seq(
+      "-cp",
+      ClassPath.fromURLs(classpathURLs ++ List(config.scalaLibraryJar.toURL, config.scalaCompilerJar.toURL): _*)) ++
+      Seq(config.javaProp, "scala.tools.nsc.MainGenericRunner")
 
     /** `-cp <classpath from config; classpath from benchmark>`
       */
@@ -51,86 +52,81 @@ trait JVMInvoker {
 
     /** `-cp <classpath from config; classpath from benchmark> Runner`
       */
-    private def asHarness(harness: ObjectHarness, benchmark: Benchmark, classpathURLs: List[URL]) =
+    private def asHarness(harness: ObjectHarness, benchmark: Benchmark, classpathURLs: List[URL]): Seq[String] =
       asScalaClasspath(classpathURLs) ++ Seq(harness.getClass.getName replace ("$", ""))
 
     /** `-cp <classpath from config; classpath from benchmark> Benchmark`
       */
-    private def asBenchmark(benchmark: Benchmark, classpathURLs: List[URL]) =
+    private def asBenchmark(benchmark: Benchmark, classpathURLs: List[URL]): Seq[String] =
       asScalaClasspath(classpathURLs) ++ Seq(benchmark.info.name)
 
     /** `-cp <scala-library.jar, scala-compiler.jar> -Dscala.home=<scala-home> scala.tools.nsc.MainGenericRunner
       * -cp <classpath from config; classpath from benchmark> Benchmark benchmark.arguments`
       */
-    def asJavaArgument(benchmark: Benchmark, classpathURLs: List[URL]) =
+    def asJavaArgument(benchmark: Benchmark, classpathURLs: List[URL]): Seq[String] =
       asScala(classpathURLs) ++ asBenchmark(benchmark, classpathURLs) ++ benchmark.info.arguments
 
     /** `-cp <scala-library.jar, scala-compiler.jar> -Dscala.home=<scala-home> scala.tools.nsc.MainGenericRunner
       * -cp <classpath from config; classpath from benchmark> Runner benchmark.toXML config.args`
       * Result must be a string on one line and starts with `<`.
       */
-    def asJavaArgument(harness: ObjectHarness, benchmark: Benchmark, classpathURLs: List[URL]) =
+    def asJavaArgument(harness: ObjectHarness, benchmark: Benchmark, classpathURLs: List[URL]): Seq[String] =
       asScala(classpathURLs) ++
         asHarness(harness, benchmark, classpathURLs) ++
         Seq(scala.xml.Utility.trim(benchmark.info.toXML).toString) ++
         config.args
 
-    def command(harness: ObjectHarness, benchmark: Benchmark, classpathURLs: List[URL]) =
+    def command(harness: ObjectHarness, benchmark: Benchmark, classpathURLs: List[URL]): Seq[String] =
       java ++ asJavaArgument(harness, benchmark, classpathURLs)
 
-    def command(benchmark: Benchmark, classpathURLs: List[URL]) =
+    def command(benchmark: Benchmark, classpathURLs: List[URL]): Seq[String] =
       java ++ asJavaArgument(benchmark, classpathURLs)
 
     def invoke[R, E](command: Seq[String],
                      stdout: String => R,
                      stderr: String => E,
-                     timeout: Int): (ArrayBuffer[R], ArrayBuffer[E]) = {
+                     timeout: Long): (ArrayBuffer[R], ArrayBuffer[E]) = {
 
-      log.debug("Invoked command: " + (command mkString " "))
+      log.debug("invoked command: " + (command mkString " "))
 
+      // format: OFF
       val result         = ArrayBuffer[R]()
       val error          = ArrayBuffer[E]()
       val processBuilder = Process(command)
+      val processIO      = new ProcessIO(_ => (),
+                                         Source.fromInputStream(_).getLines foreach (result append stdout(_)),
+                                         Source.fromInputStream(_).getLines foreach (error append stderr(_)))
+      // format: ON
 
-      val processIO = new ProcessIO(
-        _ => (),
-        Source.fromInputStream(_).getLines foreach (result append stdout(_)),
-        Source.fromInputStream(_).getLines foreach (error append stderr(_)))
+      lazy val process = processBuilder run processIO
 
-      val processStarter = new Thread {
+      case object FINISH
 
-        override def run = {
-          var process: Process = null
-          try {
-            process = processBuilder.run(processIO)
-            val success = process.exitValue
-            log.debug("Sub-process exit value: " + success)
-          }
-          catch {
-            case e: InterruptedException =>
-              log.error("Timeout")
-              process.destroy
-          }
-        }
-
+      def finalizeProcess(notify: => Unit): Unit = {
+        process.destroy
+        notify
       }
-      val timer = new Thread {
 
-        override def run = try {
-          Thread sleep (timeout + 3000)
-          processStarter.interrupt()
+      val timerSelf = Actor.self
+
+      Actor.actor {
+        try {
+          val success = process.exitValue // force the lazy process to run
+          log.debug("sub-process exit value: " + success)
         }
         catch {
           case e: InterruptedException =>
-            log.debug("Not timeout")
+            log.error("interrupted")
+            timerSelf ! TIMEOUT
         }
-
+        timerSelf ! FINISH
+        Actor.exit
       }
 
-      processStarter.start()
-      if (timeout > 0) timer.start()
-      processStarter.join
-      timer.interrupt()
+      Actor.self.receiveWithin(timeout) {
+        case FINISH  => finalizeProcess(log.verbose("completed"))
+        case TIMEOUT => finalizeProcess(log.error("timeout"))
+      }
 
       (result, error)
     }
@@ -162,7 +158,7 @@ object JVMInvoker extends JVMInvoker {
     def invoke[R, E](command: Seq[String],
                      stdout: String => R,
                      stderr: String => E,
-                     timeout: Int): (ArrayBuffer[R], ArrayBuffer[E])
+                     timeout: Long): (ArrayBuffer[R], ArrayBuffer[E])
 
     /** OS command to invoke an new JVM which has `harness` as the main scala class
       * and `benchmark` as an argument.
@@ -173,11 +169,15 @@ object JVMInvoker extends JVMInvoker {
       */
     def command(benchmark: Benchmark, classpathURLs: List[URL]): Seq[String]
 
-    /** OS command argument to run with java.
-      * Ex: `Seq("-cp", ".", "scala.tools.nsc.MainGenericRunner", "-version")`.
+    /** OS command arguments to run java with `benchmark` as the main scala class.
+      * Ex: `Seq("-cp", ".", "scala.tools.nsc.MainGenericRunner", "me.MyBenchmark")`.
       */
     def asJavaArgument(benchmark: Benchmark, classpathURLs: List[URL]): Seq[String]
 
+    /** OS command arguments to run java with `harness` as the main scala class and
+      * the `benchmark` to be run.
+      * Ex: `Seq("scala.tools.nsc.MainGenericRunner", "scala.tools.sbs.common.RunOnlyHarness", "me.MyBenchmark")`.
+      */
     def asJavaArgument(harness: ObjectHarness, benchmark: Benchmark, classpathURLs: List[URL]): Seq[String]
 
   }

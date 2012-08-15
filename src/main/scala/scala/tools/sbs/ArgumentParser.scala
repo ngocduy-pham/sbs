@@ -35,16 +35,16 @@ object ArgumentParser {
     */
   def parse(args: Array[String]): (Config, Log, InfoPack) = {
     val config = new Config(args)
-    UI.config = config
-    val log = LogFactory(config)
-    val pack = new InfoPack
+    UI.config  = config
+    val log    = LogFactory(config)
+    val pack   = new InfoPack
     config.modes foreach (mode => {
       pack switchMode mode
       val modeLocation = config.benchmarkDirectory / mode.location
       val nameList =
         if (config.parsed.residualArgs.length > 0) config.parsed.residualArgs
         else modeLocation.toDirectory.list.toList filterNot (_ hasExtension "arg") map (_ name)
-      nameList map (name => getInfo(name, mode, config)) filterNot (_ isDefined) foreach (info => pack add info.get)
+      nameList map (name => getInfo(name, mode, config)) filter (_ isDefined) foreach (info => pack add info.get)
     })
     (config, log, pack)
   }

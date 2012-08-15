@@ -19,11 +19,12 @@ import scala.tools.cmd.Spec
 import scala.tools.sbs.util.Constant
 
 /** sbs' command line arguments and flags go here.
- */
+  */
 trait BenchmarkSpec extends Spec with Meta.StdOpts with Interpolation {
 
+  // format: OFF
   def referenceSpec = BenchmarkSpec
-  def programInfo = Spec.Info("sbs", "", "scala.tools.sbs.BenchmarkDriver")
+  def programInfo   = Spec.Info("sbs", "", "scala.tools.sbs.BenchmarkDriver")
 
   private implicit val tokenizeString = FromString.ArgumentsFromString // String => List[String]
 
@@ -54,17 +55,17 @@ trait BenchmarkSpec extends Spec with Meta.StdOpts with Interpolation {
 
   heading            ("Per-benchmark numbers of performance:")
   import performance.PerfBenchmark._
-  val multiplier    = multiplierOpt  / "# of times to run per measurement"         defaultTo 1
-  val measurement   = measurementOpt / "# of measurements"                         defaultTo 11
-  val sample        = sampleOpt      / "# of pre-created samples"                  defaultTo 0
-  val shouldCompile = !("noncompile" / "not re-compile the benchmarks if set" --?)
+  val multiplier  = multiplierOpt  / "# of times to run per measurement"         defaultTo 1
+  val measurement = measurementOpt / "# of measurements"                         defaultTo 11
+  val sample      = sampleOpt      / "# of pre-created samples"                  defaultTo 0
+  val notCompile  = "noncompile"   / "not re-compile the benchmarks if set" --?
 
   heading                        ("Per-benchmark names for profiling:")
   import profiling.ProfBenchmark._ 
   protected val _classes        = classesOpt / "classes to be profiled" defaultTo ""
-                                  ""                / ("  split by " + Constant.COLON)
+                                  ""         / ("  split by " + Constant.COLON)
   protected val _exclude        = excludeOpt / "classes to be ignored" defaultTo ""
-                                  ""                / ("  split by " + Constant.COLON)
+                                  ""         / ("  split by " + Constant.COLON)
 
   val methodName    = methodNameOpt    / "name of the method to be studied" defaultTo ""
   val fieldName     = fieldNameOpt     / "name of the field to be studied"  defaultTo ""
@@ -74,11 +75,10 @@ trait BenchmarkSpec extends Spec with Meta.StdOpts with Interpolation {
 
   heading             ("Per-benchmark names for pinpointing regression detection:")
   import pinpoint.PinpointBenchmark._
-  val className                 = classNameOpt  / "the insterested class"  defaultTo ""
-
+  val className                 = classNameOpt       / "the insterested class"                defaultTo ""
   val pinpointBottleneckDectect = "regression-point" / "whether to find the regression point" --?
-  protected val _previous       = previousOpt / "location of the previous build" defaultTo ".previous"
-                                  ""         / "  should not be included in classpath"
+  protected val _previous       = previousOpt        / "location of the previous build"       defaultTo ".previous"
+                                  ""                 / "  should not be included in classpath"
 
   heading                          ("Specifying paths and additional values, ~ means sbs root:")
   protected val benchmarkDirPath  = "benchmarkdir"   / "path from ~ to benchmark directory" defaultTo "."
@@ -87,8 +87,8 @@ trait BenchmarkSpec extends Spec with Meta.StdOpts with Interpolation {
   protected val classpath         = "classpath"      / "classpath for benchmarks running"   defaultTo ""
   protected val scalaLibPath      = "scala-library"  / "path to scala-library.jar"          defaultTo ""
   protected val scalaCompilerPath = "scala-compiler" / "path to scala-compiler.jar"         defaultTo ""
-  val javaOpts                    = "javaopts"       / "flags to java on all runs"          defaultToEnv "JAVA_OPTS"
-  val scalacOpts                  = "scalacopts"     / "flags to scalac on all tests"       defaultToEnv "SCALAC_OPTS"
+  val           javaOpts          = "javaopts"       / "flags to java on all runs"          defaultToEnv "JAVA_OPTS"
+  val           scalacOpts        = "scalacopts"     / "flags to scalac on all tests"       defaultToEnv "SCALAC_OPTS"
   protected val javaPath          = "java-home"      / "path to java" defaultTo (System getProperty "java.home")
 
   heading        ("Options influencing output:")
@@ -101,18 +101,22 @@ trait BenchmarkSpec extends Spec with Meta.StdOpts with Interpolation {
   val isCleanup    = "cleanup"     / "delete all stale files and dirs before run" --?
   val isNoCleanLog = "noclean-log" / "do not delete any logfiles" --?
   val isHelp       = "help"        / "print usage message" --?
+  // format: ON
 
 }
 
 object BenchmarkSpec extends BenchmarkSpec with Property {
+
+  type ThisCommandLine = BenchmarkCommandLine
+
   lazy val propMapper = new PropertyMapper(BenchmarkSpec) {
     override def isPassThrough(key: String) = key == "sbs.options"
   }
 
-  type ThisCommandLine = BenchmarkCommandLine
   class BenchmarkCommandLine(args: List[String]) extends SpecCommandLine(args) {
     def propertyArgs = BenchmarkSpec.propertyArgs
   }
 
   override def creator(args: List[String]): ThisCommandLine = new BenchmarkCommandLine(args)
+
 }

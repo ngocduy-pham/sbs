@@ -35,17 +35,14 @@ class SubJVMMeasurer(val log: Log,
     * User classes will be loaded from the given `classpathURLs`.
     */
   def measure(benchmark: PerfBenchmark.Benchmark, classpathURLs: List[URL]): MeasurementResult = {
+    // format: OFF
     val invoker         = JVMInvoker(log, config)
-    val (result, error) = invoker.invoke(
-      invoker.command(measurementHarness, benchmark, classpathURLs),
-      line => try scala.xml.XML loadString line
-      catch {
-        case _ =>
-          log(line)
-          null
-      },
-      line => line,
-      benchmark.info.timeout)
+    val (result, error) = invoker.invoke(invoker.command(measurementHarness, benchmark, classpathURLs),
+                                         line => try scala.xml.XML loadString line
+											     catch { case _ => log(line); null },
+									     line => line,
+									     benchmark.info.timeout)
+    // format: ON
     if (error.length > 0) {
       error foreach log.error
       ExceptionMeasurementFailure(new Exception(error mkString "\n"))
