@@ -11,27 +11,25 @@ package scala.tools.sbs
 package pinpoint
 package finder
 
-import scala.tools.nsc.io.Directory
-import scala.tools.sbs.io.Log
-
 /** Uses instrumentation method to point out the method call
-  * that is a performance bottleneck in a given method.
+  * that is a performance regression point in a given method.
   */
-trait FinderWrapper {
+trait RegressionFinder {
+  self: PinpointBenchmark =>
 
-  trait RegressionFinder {
+  type FinderType <: Finder
 
-    def find(): FindingResult
+  def regressionFind(benchmark: BenchmarkType): FindingResult =
+    regressionFinder(benchmark) run
+
+  trait Finder {
+
+    val benchmark: BenchmarkType
+
+    def run(): FindingResult
 
   }
 
-  abstract class BasicFinder(val config: Config,
-                             val log: Log,
-                             val benchmark: PinpointBenchmark.Benchmark,
-                             val className: String,
-                             val methodName: String,
-                             val instrumentedPath: Directory,
-                             val storagePath: Directory)
-    extends RegressionFinder
+  def regressionFinder(benchmark: BenchmarkType): FinderType
 
 }

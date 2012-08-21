@@ -15,7 +15,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.tools.nsc.io.Path.string2path
 import scala.tools.nsc.io.Directory
 import scala.tools.nsc.io.File
-import scala.tools.sbs.benchmark.BenchmarkBase.Benchmark
+import scala.tools.sbs.benchmark.BenchmarkInfo
 import scala.tools.sbs.io.Log
 import scala.tools.sbs.util.Constant.SLASH
 import scala.tools.sbs.util.FileUtil
@@ -33,9 +33,9 @@ trait Persistence {
 
   /** An implement of {@link Persistor} based on simple text files.
     */
-  class FileBasedPersistor(log: Log, config: Config, benchmark: Benchmark, mode: Mode) extends Persistor {
+  class FileBasedPersistor(log: Log, config: Config, info: BenchmarkInfo, mode: Mode) extends Persistor {
 
-    val location: Directory = FileUtil.mkDir(config.history / mode.location / benchmark.info.name) match {
+    val location: Directory = FileUtil.mkDir(config.history / mode.location / info.name) match {
       case Left(dir) => dir
       case Right(s) => {
         log.error(s)
@@ -53,9 +53,9 @@ trait Persistence {
 
     def loadFromFile(): History.Historian = {
 
-      var line: String   = null
+      var line: String = null
       var series: Series = null
-      var justLoaded     = History(benchmark, mode)
+      var justLoaded = History()
 
       log.debug("--Persistor directory--  " + location.path)
 
@@ -105,25 +105,25 @@ trait Persistence {
       */
     def generate(num: Int): History.Historian = {
       var i = 0
-      val runner = RunnerFactory(config, log, mode)
-      var justCreated = History(benchmark, mode)
+      val runner = Runner(config, log, mode)
+      var justCreated = History()
       while (i < num) {
-        runner run benchmark match {
-          case success: MeasurementSuccess => {
-
+        runner run info match {
+          case Some(success: MeasurementSuccess) => {
             if (store(success, true)) {
               log.debug("--Stored--")
               i += 1
-              log.verbose("--Got " + i + " sample(s)--")
+              log.verbose("--got " + i + " sample(s)--")
             }
             else {
-              log.debug("--Cannot store--")
+              log.debug("--cannot store--")
             }
             justCreated add success.series
           }
-          case failure: MeasurementFailure =>
-            log.debug("--Generation error at " + i + ": " + failure.reason + "--")
-          case _ => throw new Error("WTF is just created?")
+          case Some(failure: MeasurementFailure) =>
+            log.debug("--generation error at " + i + ": " + failure.reason + "--")
+          case None => ()
+          case _    => throw new Error("WTF is just created?")
         }
       }
       justCreated
@@ -136,7 +136,7 @@ trait Persistence {
           case _       => ""
         }
       }
-      FileUtil.createFile(location.path + directory, benchmark.info.name + "." + mode.toString + ".xml") match {
+      FileUtil.createFile(location.path + directory, info.name + "." + mode.toString + ".xml") match {
         case Some(xmlFile) => {
           log.info("Result stored OK into " + xmlFile.path)
           XML.save(xmlFile.path, runSuccess.toXML, "UTF-8", true, null)
@@ -151,7 +151,8 @@ trait Persistence {
 
   }
 
-  def apply(log: Log, config: Config, benchmark: Benchmark, mode: Mode): subPersistor
+  def apply(log: Log, config: Config, info: BenchmarkInfo, mode: Mode): subPersistor
+  
 }
 
 /** Factory object of {@link Persistor}.
@@ -170,7 +171,7 @@ object Persistence extends Persistence {
 
   }
 
-  def apply(log: Log, config: Config, benchmark: Benchmark, mode: Mode): subPersistor =
-    new FileBasedPersistor(log, config, benchmark, mode)
+  def apply(log: Log, config: Config, info: BenchmarkInfo, mode: Mode): subPersistor =
+    new FileBasedPersistor(log, config, info, mode)
 
 }

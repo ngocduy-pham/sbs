@@ -58,14 +58,13 @@ case class BenchmarkInfo(name: String,
       <notcompile>{ notCompile }</notcompile>
     </benchmark>
 
-  import BenchmarkBase.Benchmark
   import common.BenchmarkCompiler.Compiler
 
   /** Compiles the benchmark using given compiler.
     *
     * @return
-    *        true  if compile OK
-    *        false otherwise
+    *      true  if compile OK
+    *      false otherwise
     */
   def isCompiledOK(compiler: Compiler, config: Config): Boolean =
     if (!notCompile && !(compiler compile this)) {
@@ -76,19 +75,17 @@ case class BenchmarkInfo(name: String,
       true
     }
 
-  /** Creates the benchmark represented by this info.
-    */
-  def expand(factory: BenchmarkBase#Factory, config: Config): Benchmark = factory createFrom this
-
 }
 
 object BenchmarkInfo {
 
-  val srcOpt          = "src"
-  val argumentsOpt    = "arguments"
-  val classpathOpt    = "classpath"
-  val timeoutOpt      = "timeout"
-  val noncompileOpt   = "noncompile"
+  // format: OFF
+  val srcOpt        = "src"
+  val argumentsOpt  = "arguments"
+  val classpathOpt  = "classpath"
+  val timeoutOpt    = "timeout"
+  val noncompileOpt = "noncompile"
+  // format: ON
 
   /** `--` is automatically prepend to any option.
     * Pass the list of option names only.
@@ -109,12 +106,12 @@ object BenchmarkInfo {
 
 class InfoPack {
 
-  private var modes       = ArrayBuffer[InfoMode]()
+  private var modes = ArrayBuffer[InfoMode]()
   private def currentMode = modes.last
 
-  def switchMode(mode: Mode)       = modes :+= new InfoMode(mode)
-  def apply(mode: Mode)            = modes find (_.mode == mode) get
-  def add(newInfo: BenchmarkInfo)  = currentMode add newInfo
+  def switchMode(mode: Mode) = modes :+= new InfoMode(mode)
+  def apply(mode: Mode) = modes find (_.mode == mode) get
+  def add(newInfo: BenchmarkInfo) = currentMode add newInfo
   def foreach(f: InfoMode => Unit) = modes foreach f
 
   def filter(f: BenchmarkInfo => Boolean): InfoPack = {
@@ -143,9 +140,9 @@ class InfoMode(val mode: Mode) {
 
   private var _infos = ArrayBuffer[BenchmarkInfo]()
 
-  def add(newInfo: BenchmarkInfo)       = _infos += newInfo
-  def infos                             = _infos
+  def add(newInfo: BenchmarkInfo) = _infos += newInfo
+  def infos = _infos
   def foreach(f: BenchmarkInfo => Unit) = infos foreach f
-  def map[B](f: BenchmarkInfo => B)     = infos map f
+  def map[B](f: BenchmarkInfo => B) = infos map f
 
 }

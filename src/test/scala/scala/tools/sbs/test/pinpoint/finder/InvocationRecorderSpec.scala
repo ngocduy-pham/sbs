@@ -3,41 +3,44 @@ package pinpoint
 package finder
 
 import scala.collection.mutable.ArrayBuffer
-import scala.tools.nsc.io.Path.string2path
+import scala.tools.sbs.Configured
 import scala.tools.sbs.benchmark.BenchmarkInfo
 import scala.tools.sbs.common.BenchmarkCompiler
 import scala.tools.sbs.pinpoint.finder.InvocationRecorder
-import scala.tools.sbs.pinpoint.PinpointBenchmark
+import scala.tools.sbs.pinpoint.PinpointBenchmarkCreator
 import scala.tools.sbs.util.FileUtil
 
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.Spec
 
-class InvocationRecorderSpec extends Spec with BeforeAndAfterAll {
+class InvocationRecorderSpec extends Spec with BeforeAndAfterAll with PinpointBenchmarkCreator with Configured {
 
-  val benchmarkName    = "InvocationRecorderTestBenchmark"
-  val invoRecorderDir  = testDir         / "InvocationRecorderSpec" createDirectory ()
+  val log = testLog
+  val config = testConfig
+
+  val benchmarkName = "InvocationRecorderTestBenchmark"
+  val invoRecorderDir = testDir / "InvocationRecorderSpec" createDirectory ()
   val invoRecorderFile = invoRecorderDir / (benchmarkName + ".scala") toFile
-  val instrumentedOut  = invoRecorderDir / "instrumented" createDirectory ()
-  val backupPlace      = invoRecorderDir / "backup" createDirectory ()
-  val benchmarkInfo    = new BenchmarkInfo(benchmarkName, invoRecorderFile, Nil, Nil, 0, false)
+  val instrumentedOut = invoRecorderDir / "instrumented" createDirectory ()
+  val backupPlace = invoRecorderDir / "backup" createDirectory ()
+  val benchmarkInfo = new BenchmarkInfo(benchmarkName, invoRecorderFile, Nil, Nil, 0, false)
 
   def benchmarkSource(runBody: String, otherDefs: String, pinpointClass: String, pinpointMethod: String) =
     "class " + benchmarkName + """ extends scala.tools.sbs.pinpoint.PinpointTemplate {
 
-  override val className = """+ "\"" + pinpointClass + "\"" + """
+  override val className = """ + "\"" + pinpointClass + "\"" + """
 
-  override val methodName = """+ "\"" + pinpointMethod + "\"" + """
+  override val methodName = """ + "\"" + pinpointMethod + "\"" + """
 
   def init() = ()
 
   def run() = {""" +
-    runBody + """
+      runBody + """
   }
 
 """ +
-    otherDefs +
-"""
+      otherDefs +
+      """
 
   def reset() = ()
 
@@ -50,12 +53,12 @@ class InvocationRecorderSpec extends Spec with BeforeAndAfterAll {
     FileUtil.write(invoRecorderFile.path, content)
   }
 
-  def createBenchmark(content: String) = ({
+  def createBenchmark(content: String) = {
     define(content)
     val compiler = BenchmarkCompiler(testLog, testConfig)
     benchmarkInfo.isCompiledOK(compiler, testConfig)
-    benchmarkInfo.expand(PinpointBenchmark.factory(testLog, testConfig), testConfig)
-  }).asInstanceOf[PinpointBenchmark.Benchmark]
+    factory expand benchmarkInfo get
+  }
 
   def createRecorder(runBody: String, otherDefs: String, className: String, methodName: String = "run") =
     new InvocationRecorder(

@@ -1,0 +1,62 @@
+(:subprojects
+((:runtime-deps
+("D:\\SkyDrive\\Enjoy\\Scala\\sbs\\lib\\tools.jar"
+"C:\\Users\\Sthy\\.sbt\\boot\\scala-2.9.1\\lib\\scala-library.jar"
+"C:\\Users\\Sthy\\.sbt\\boot\\scala-2.9.1\\lib\\scala-compiler.jar"
+"E:\\Tool\\sbt\\.ivy2\\cache\\org.apache.commons\\commons-math\\jars\\commons-math-2.2.jar"
+"E:\\Tool\\sbt\\.ivy2\\cache\\org.scalatest\\scalatest_2.9.1\\jars\\scalatest_2.9.1-1.6.1.jar"
+"E:\\Tool\\sbt\\.ivy2\\cache\\javassist\\javassist\\jars\\javassist-3.12.1.GA.jar"
+"E:\\Tool\\sbt\\.ivy2\\cache\\org.apache.ant\\ant\\jars\\ant-1.8.2.jar"
+"E:\\Tool\\sbt\\.ivy2\\cache\\org.apache.ant\\ant-launcher\\jars\\ant-launcher-1.8.2.jar"
+"D:\\Enjoy\\scala\\sbs\\target\\scala-2.9.1\\classes"
+"D:\\Enjoy\\scala\\sbs\\target\\scala-2.9.1\\classes")
+:module-name
+"scala-benchmarking-suite"
+:compile-deps
+("D:\\SkyDrive\\Enjoy\\Scala\\sbs\\lib\\tools.jar"
+"C:\\Users\\Sthy\\.sbt\\boot\\scala-2.9.1\\lib\\scala-library.jar"
+"C:\\Users\\Sthy\\.sbt\\boot\\scala-2.9.1\\lib\\scala-compiler.jar"
+"E:\\Tool\\sbt\\.ivy2\\cache\\org.apache.commons\\commons-math\\jars\\commons-math-2.2.jar"
+"E:\\Tool\\sbt\\.ivy2\\cache\\org.scalatest\\scalatest_2.9.1\\jars\\scalatest_2.9.1-1.6.1.jar"
+"E:\\Tool\\sbt\\.ivy2\\cache\\javassist\\javassist\\jars\\javassist-3.12.1.GA.jar"
+"E:\\Tool\\sbt\\.ivy2\\cache\\org.apache.ant\\ant\\jars\\ant-1.8.2.jar"
+"E:\\Tool\\sbt\\.ivy2\\cache\\org.apache.ant\\ant-launcher\\jars\\ant-launcher-1.8.2.jar")
+:version
+"0.1"
+:test-target
+"D:\\Enjoy\\Scala\\sbs\\target\\scala-2.9.1\\test-classes"
+:name
+"scala benchmarking suite"
+:depends-on-modules
+()
+:package
+"scala-benchmarking-suite"
+:target
+"D:\\Enjoy\\Scala\\sbs\\target\\scala-2.9.1\\classes"
+:source-roots
+("D:\\SkyDrive\\Enjoy\\Scala\\sbs\\src\\main\\scala"
+"D:\\SkyDrive\\Enjoy\\Scala\\sbs\\src\\main\\java"
+"D:\\Enjoy\\scala\\sbs\\target\\scala-2.9.1\\src_managed\\main"
+"D:\\SkyDrive\\Enjoy\\Scala\\sbs\\src\\test\\scala"
+"D:\\SkyDrive\\Enjoy\\Scala\\sbs\\src\\test\\java"
+"D:\\Enjoy\\scala\\sbs\\target\\scala-2.9.1\\src_managed\\test")
+:test-deps
+("D:\\SkyDrive\\Enjoy\\Scala\\sbs\\lib\\tools.jar"
+"C:\\Users\\Sthy\\.sbt\\boot\\scala-2.9.1\\lib\\scala-library.jar"
+"C:\\Users\\Sthy\\.sbt\\boot\\scala-2.9.1\\lib\\scala-compiler.jar"
+"E:\\Tool\\sbt\\.ivy2\\cache\\org.apache.commons\\commons-math\\jars\\commons-math-2.2.jar"
+"E:\\Tool\\sbt\\.ivy2\\cache\\org.scalatest\\scalatest_2.9.1\\jars\\scalatest_2.9.1-1.6.1.jar"
+"E:\\Tool\\sbt\\.ivy2\\cache\\javassist\\javassist\\jars\\javassist-3.12.1.GA.jar"
+"E:\\Tool\\sbt\\.ivy2\\cache\\org.apache.ant\\ant\\jars\\ant-1.8.2.jar"
+"E:\\Tool\\sbt\\.ivy2\\cache\\org.apache.ant\\ant-launcher\\jars\\ant-launcher-1.8.2.jar"
+"D:\\Enjoy\\scala\\sbs\\target\\scala-2.9.1\\classes"
+"D:\\Enjoy\\scala\\sbs\\target\\scala-2.9.1\\test-classes")
+:formatting-pref
+(
+:alignParameters t
+:alignSingleLineCaseStatements t
+:doubleIndentClassDeclaration t
+:multilineScaladocCommentsStartOnFirstLine t
+:placeScaladocAsterisksBeneathSecondAsterisk t
+)
+)))

@@ -10,7 +10,7 @@
 
 package scala.tools.sbs
 
-import scala.tools.sbs.benchmark.BenchmarkBase.Benchmark
+import scala.tools.sbs.benchmark.BenchmarkBase
 import scala.tools.sbs.util.Constant
 import scala.tools.nsc.io.Directory
 import scala.tools.nsc.io.File
@@ -25,9 +25,10 @@ case class WrongRunnerException(runner: Runner, mode: Mode)
 
 case class AlgorithmFlowException(runner: Class[_]) extends BenchmarkException("Unpredicted flow in: " + runner.getName)
 
-case class MismatchBenchmarkImplementationException(benchmark: Benchmark, runner: Runner) extends BenchmarkException(
-  "An implementation of " + benchmark.getClass.getName +
-    " is provided to a runner of type " + runner.getClass.getName)
+case class MismatchBenchmarkImplementationException(benchmark: BenchmarkBase#Benchmark, runner: Runner)
+  extends BenchmarkException(
+    "An implementation of " + benchmark.getClass.getName +
+      " is provided to a runner of type " + runner.getClass.getName)
 
 case class BackupFailureException(file: File, target: Directory)
   extends Exception("Moving " + file + " to " + target + " failed")

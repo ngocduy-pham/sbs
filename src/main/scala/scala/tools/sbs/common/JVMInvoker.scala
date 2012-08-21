@@ -20,9 +20,8 @@ import scala.io.Source
 import scala.sys.process.Process
 import scala.sys.process.ProcessIO
 import scala.tools.nsc.util.ClassPath
+import scala.tools.sbs.benchmark.BenchmarkInfo
 import scala.tools.sbs.io.Log
-
-import benchmark.BenchmarkBase.Benchmark
 
 /** Trait used to invoke a new separated JVM.
   */
@@ -52,35 +51,35 @@ trait JVMInvoker {
 
     /** `-cp <classpath from config; classpath from benchmark> Runner`
       */
-    private def asHarness(harness: ObjectHarness, benchmark: Benchmark, classpathURLs: List[URL]): Seq[String] =
+    private def asHarness(harness: ObjectHarness, classpathURLs: List[URL]): Seq[String] =
       asScalaClasspath(classpathURLs) ++ Seq(harness.getClass.getName replace ("$", ""))
 
     /** `-cp <classpath from config; classpath from benchmark> Benchmark`
       */
-    private def asBenchmark(benchmark: Benchmark, classpathURLs: List[URL]): Seq[String] =
-      asScalaClasspath(classpathURLs) ++ Seq(benchmark.info.name)
+    private def asBenchmark(info: BenchmarkInfo, classpathURLs: List[URL]): Seq[String] =
+      asScalaClasspath(classpathURLs) ++ Seq(info.name)
 
     /** `-cp <scala-library.jar, scala-compiler.jar> -Dscala.home=<scala-home> scala.tools.nsc.MainGenericRunner
       * -cp <classpath from config; classpath from benchmark> Benchmark benchmark.arguments`
       */
-    def asJavaArgument(benchmark: Benchmark, classpathURLs: List[URL]): Seq[String] =
-      asScala(classpathURLs) ++ asBenchmark(benchmark, classpathURLs) ++ benchmark.info.arguments
+    def asJavaArgument(info: BenchmarkInfo, classpathURLs: List[URL]): Seq[String] =
+      asScala(classpathURLs) ++ asBenchmark(info, classpathURLs) ++ info.arguments
 
     /** `-cp <scala-library.jar, scala-compiler.jar> -Dscala.home=<scala-home> scala.tools.nsc.MainGenericRunner
       * -cp <classpath from config; classpath from benchmark> Runner benchmark.toXML config.args`
       * Result must be a string on one line and starts with `<`.
       */
-    def asJavaArgument(harness: ObjectHarness, benchmark: Benchmark, classpathURLs: List[URL]): Seq[String] =
+    def asJavaArgument(harness: ObjectHarness, info: BenchmarkInfo, classpathURLs: List[URL]): Seq[String] =
       asScala(classpathURLs) ++
-        asHarness(harness, benchmark, classpathURLs) ++
-        Seq(scala.xml.Utility.trim(benchmark.info.toXML).toString) ++
+        asHarness(harness, classpathURLs) ++
+        Seq(scala.xml.Utility.trim(info.toXML).toString) ++
         config.args
 
-    def command(harness: ObjectHarness, benchmark: Benchmark, classpathURLs: List[URL]): Seq[String] =
-      java ++ asJavaArgument(harness, benchmark, classpathURLs)
+    def command(harness: ObjectHarness, info: BenchmarkInfo, classpathURLs: List[URL]): Seq[String] =
+      java ++ asJavaArgument(harness, info, classpathURLs)
 
-    def command(benchmark: Benchmark, classpathURLs: List[URL]): Seq[String] =
-      java ++ asJavaArgument(benchmark, classpathURLs)
+    def command(info: BenchmarkInfo, classpathURLs: List[URL]): Seq[String] =
+      java ++ asJavaArgument(info, classpathURLs)
 
     def invoke[R, E](command: Seq[String],
                      stdout: String => R,
@@ -163,22 +162,22 @@ object JVMInvoker extends JVMInvoker {
     /** OS command to invoke an new JVM which has `harness` as the main scala class
       * and `benchmark` as an argument.
       */
-    def command(harness: ObjectHarness, benchmark: Benchmark, classpathURLs: List[URL]): Seq[String]
+    def command(harness: ObjectHarness, info: BenchmarkInfo, classpathURLs: List[URL]): Seq[String]
 
     /** OS command to invoke an new JVM which has `benchmark` as the main scala class.
       */
-    def command(benchmark: Benchmark, classpathURLs: List[URL]): Seq[String]
+    def command(info: BenchmarkInfo, classpathURLs: List[URL]): Seq[String]
 
     /** OS command arguments to run java with `benchmark` as the main scala class.
       * Ex: `Seq("-cp", ".", "scala.tools.nsc.MainGenericRunner", "me.MyBenchmark")`.
       */
-    def asJavaArgument(benchmark: Benchmark, classpathURLs: List[URL]): Seq[String]
+    def asJavaArgument(info: BenchmarkInfo, classpathURLs: List[URL]): Seq[String]
 
     /** OS command arguments to run java with `harness` as the main scala class and
       * the `benchmark` to be run.
       * Ex: `Seq("scala.tools.nsc.MainGenericRunner", "scala.tools.sbs.common.RunOnlyHarness", "me.MyBenchmark")`.
       */
-    def asJavaArgument(harness: ObjectHarness, benchmark: Benchmark, classpathURLs: List[URL]): Seq[String]
+    def asJavaArgument(harness: ObjectHarness, info: BenchmarkInfo, classpathURLs: List[URL]): Seq[String]
 
   }
 

@@ -12,12 +12,16 @@ import scala.tools.sbs.benchmark.BenchmarkBase
 import scala.tools.sbs.benchmark.BenchmarkInfo
 import scala.tools.sbs.common.JVMInvoker
 import scala.tools.sbs.common.ObjectHarness
-
 import org.scalatest.Spec
+import scala.tools.sbs.benchmark.BenchmarkCreator
 
-class JVMInvokerSpec extends Spec {
 
-  object Dummy extends BenchmarkBase.Benchmark {
+class JVMInvokerSpec extends Spec with BenchmarkCreator with Configured {
+
+  val log = testLog
+  val config = testConfig
+
+  object Dummy extends Benchmark {
     val info: BenchmarkInfo = new BenchmarkInfo(
       "dummy",
       testDir,
@@ -47,9 +51,9 @@ class JVMInvokerSpec extends Spec {
     val thiz = self
     actor {
       invoker.invoke(command, _ => (), _ => (), time)
-//      receiveWithin(time) {
-//        case _ => ()
-//      }
+      //      receiveWithin(time) {
+      //        case _ => ()
+      //      }
       thiz ! FINISH
       exit
     }
@@ -74,7 +78,7 @@ class JVMInvokerSpec extends Spec {
         ClassPath.fromURLs(testConfig.classpathURLs ++ Dummy.info.classpathURLs: _*),
         DummyHarness.getClass.getName.replace("$", ""),
         scala.xml.Utility.trim(Dummy.info.toXML).toString) ++ testConfig.args)(
-        invoker.asJavaArgument(DummyHarness, Dummy, testConfig.classpathURLs ++ Dummy.info.classpathURLs))
+        invoker.asJavaArgument(DummyHarness, Dummy.info, testConfig.classpathURLs ++ Dummy.info.classpathURLs))
     }
 
     it("should create precise OS java arguments which intended to launch a snippet benchmark") {
@@ -89,7 +93,7 @@ class JVMInvokerSpec extends Spec {
         "-cp",
         ClassPath.fromURLs(testConfig.classpathURLs ++ Dummy.info.classpathURLs: _*),
         Dummy.info.name) ++ Dummy.info.arguments)(
-        invoker.asJavaArgument(Dummy, testConfig.classpathURLs ++ Dummy.info.classpathURLs))
+        invoker.asJavaArgument(Dummy.info, testConfig.classpathURLs ++ Dummy.info.classpathURLs))
     }
 
     it("should invoke a JVM running within a specified amount of time - timeout") {

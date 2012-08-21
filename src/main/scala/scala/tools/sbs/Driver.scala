@@ -51,7 +51,7 @@ object Driver {
       for (each <- config.history.deepFiles) if (!(each hasExtension "scala") && !(each hasExtension "arg")) each.delete
     }
 
-    val resultPack = new ResultPack()
+    val resultPack = new ResultPack
 
     log.info("[Compiling benchmarks]")
     val compiler = BenchmarkCompiler(log, config)
@@ -61,10 +61,9 @@ object Driver {
     log.debug(compiled.toString)
 
     // Add failure compiles for reporting
-    benchmarkInfos filterNot (compiled contains _) foreach (_ foreach (failure => {
-      val compileFailed = CompileBenchmarkFailure(failure)
-      if (config.isQuiet) notify(compileFailed, null)
-      resultPack add compileFailed
+    benchmarkInfos filterNot compiled.contains foreach (_ foreach (failure => {
+      if (config.isQuiet) notify(None, null, failure.name)
+      resultPack add CompileBenchmarkFailure(failure.name)
     }))
 
     config.modes foreach (mode => {
@@ -78,19 +77,8 @@ object Driver {
         case _        => ()
       }
 
-      val runner = RunnerFactory(config, log, mode)
+      val runner = Runner(config, log, mode)
       log.debug("Runner: " + runner.getClass.getName)
-
-      val benchmarks = compiled(mode) map (info =>
-        try info.expand(runner.benchmarkFactory, config)
-        catch {
-          case e@(_: ClassNotFoundException | _: ClassCastException) => {
-            log.error(e.toString)
-            null
-          }
-        }) filterNot (_ == null)
-
-      log.info("[Expanding completed]")
 
       /*log.info("[Generating sample histories]")
       try benchmarks filter (_.sampleNumber > 0) foreach (runner generate _)
@@ -100,24 +88,22 @@ object Driver {
 
       // Benchmarking
       log.info("[Start benchmarking]")
-      benchmarks /*filter (_.sampleNumber == 0)*/ foreach (benchmark => {
 
-        log.info("Benchmark: " + benchmark.info.name)
-        log.debug("Benchmark: " + benchmark.getClass.getName)
-
+      compiled(mode) foreach (info => {
+        log.info("Benchmark: " + info.name)
         try {
-          val result = runner run benchmark
-          if (config.isQuiet) notify(result, mode)
-          resultPack add result
+          val result = runner run info
+          if (config.isQuiet) notify(result, mode, info.name)
+          if (result.isDefined) resultPack add result.get
         }
         catch {
           case e: Exception => {
             log.info("[    Run FAILED    ]")
-
-            resultPack add new ExceptionBenchmarkFailure(benchmark.info.name, e)
+            resultPack add new ExceptionBenchmarkFailure(info.name, e)
           }
         }
       })
+
       if (!config.isNoCleanLog) {
         FileUtil.cleanLog(config.benchmarkDirectory / mode.location)
       }
@@ -133,13 +119,15 @@ object Driver {
     }
   }
 
-  def notify(each: BenchmarkResult, mode: Mode) = {
-    val last = each match {
-      case _: BenchmarkSuccess => "[  OK  ]"
-      case _                   => "[FAILED]"
-    }
+  def notify(each: Option[BenchmarkResult], mode: Mode, name: String) = {
+    val last =
+      if (each.isDefined) each.get match {
+        case _: BenchmarkSuccess => "[  OK  ]"
+        case _                   => "[FAILED]"
+      }
+      else { "[FAILED]" }
     val modename = if (mode == null) "compile" else mode.location
-    System.out.format("%-10s | %-30s %10s\n", modename, each.benchmarkName, last)
+    System.out.format("%-10s | %-30s %10s\n", modename, name, last)
   }
 
   def overallReport(config: Config, pack: ResultPack) {

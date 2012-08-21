@@ -11,27 +11,20 @@
 package scala.tools.sbs
 package profiling
 
-import scala.tools.sbs.benchmark.BenchmarkBase.Benchmark
 import scala.tools.sbs.io.Log
 
 /** Trait for some kinds of profiling.
   */
 trait Profiler extends Runner {
-  self: Configured =>
+  self: ProfBenchmark with Configured =>
 
-  protected val upperBound = manifest[ProfBenchmark.Benchmark]
+  def run(benchmark: BenchmarkType): BenchmarkResult = profile(benchmark)
 
-  val benchmarkFactory = ProfBenchmark.factory(log, config)
-
-  protected def doBenchmarking(benchmark: Benchmark): BenchmarkResult = {
-    profile(benchmark.asInstanceOf[ProfBenchmark.Benchmark])
-  }
-
-  protected def profile(benchmark: ProfBenchmark.Benchmark): ProfilingResult
+  def profile(benchmark: BenchmarkType): ProfilingResult
 
   /** Do nothing method.
     */
-  protected def doGenerating(benchmark: Benchmark) = ()
+  def generate(benchmark: BenchmarkType) = ()
 
 }
 

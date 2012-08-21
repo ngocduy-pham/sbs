@@ -14,19 +14,18 @@ package performance
 import scala.compat.Platform
 
 /** Measurer for benchmarking on steady state. Should be run on a clean new JVM.
- */
-object SteadyHarness extends MeasurementHarness[PerfBenchmark.Benchmark] {
+  */
+object SteadyHarness extends MeasurementHarness with PerfBenchmarkCreator with Configured {
 
-  protected val mode       = SteadyState
-  protected val upperBound = manifest[PerfBenchmark.Benchmark]
+  val mode = SteadyState
 
-  def measure(benchmark: PerfBenchmark.Benchmark): MeasurementResult = {
+  def measure(benchmark: BenchmarkType): MeasurementResult = {
     val statistic = Statistics(config, log)
     log.info("[Benchmarking steady state]")
     seriesAchiever achieve (
       benchmark,
       series => (statistic CoV series) < config.precisionThreshold,
-      () => {
+      {
         benchmark.init()
         val start = Platform.currentTime
         var i = 0

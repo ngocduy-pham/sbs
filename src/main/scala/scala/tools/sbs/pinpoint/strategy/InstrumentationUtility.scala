@@ -17,16 +17,18 @@ import scala.tools.nsc.io.Directory
 import scala.tools.nsc.io.File
 import scala.tools.sbs.common.Backuper
 
-trait InstrumentationUtility extends RequiredInfo {
+trait InstrumentationUtility {
   self: Configured =>
 
-  private val backupers = ArrayBuffer[Backuper]()
+  val instrumentedPath: Directory
+  val storagePath: Directory
 
-  /**
-   * One new Backuper holds the information each time we do the backup-ing
-   */
+  private[this] val backupers = ArrayBuffer[Backuper]()
+
+  /** One new Backuper holds the information each time we do the backup-ing
+    */
   def backup(files: List[File], location: Directory) = {
-    backupers append Backuper(log, config, files, location, storagePath)
+    backupers += Backuper(log, config, files, location, storagePath)
     backupers.last.backup()
   }
 

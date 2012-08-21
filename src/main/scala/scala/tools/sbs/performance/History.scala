@@ -12,8 +12,6 @@ package scala.tools.sbs
 package performance
 
 import scala.collection.generic.CanBuildFrom
-import scala.collection.mutable.ArrayBuffer
-import scala.tools.sbs.benchmark.BenchmarkBase.Benchmark
 
 trait History {
 
@@ -24,8 +22,6 @@ trait History {
     def add(ele: Series): subHistorian
 
     def append(tag: subHistorian): Unit
-
-    def mode: Mode
 
     def apply(i: Int): Series
 
@@ -41,7 +37,7 @@ trait History {
 
     def length: Int
 
-    def map[B, That](f: Series => B)(implicit bf: CanBuildFrom[ArrayBuffer[Series], B, That]): That
+    def map[B, That](f: Series => B)(implicit bf: CanBuildFrom[List[Series], B, That]): That
 
     def foreach(f: Series => Unit): Unit
 
@@ -49,7 +45,7 @@ trait History {
 
   }
 
-  def apply(benchmark: Benchmark, mode: Mode): subHistorian
+  def apply(): subHistorian
 
 }
 
@@ -57,18 +53,16 @@ object History extends History {
 
   type subHistorian = Historian
 
-  /** An implement of {@link History}. Uses `ArrayBuffer` to hold previous measurement data.
+  /** An implement of {@link History}. Uses `List` to hold previous measurement data.
     */
-  class ArrayBufferHistorian(benchmark: Benchmark, mode: Mode) extends Historian {
+  class ListBasedHistorian extends Historian {
 
-    /** The {@link Series} array.
+    /** The {@link Series} list.
       */
-    private var data = ArrayBuffer[Series]()
+    private var data = List[Series]()
 
-    def this(benchmark: Benchmark,
-             mode: Mode,
-             data: ArrayBuffer[Series]) {
-      this(benchmark, mode)
+    def this(data: List[Series]) {
+      this
       this.data = data
     }
 
@@ -79,7 +73,7 @@ object History extends History {
     /** Adds a `Series` to `data`.
       */
     def add(ele: Series) = {
-      data += ele
+      data :+= ele
       this
     }
 
@@ -98,13 +92,13 @@ object History extends History {
 
     def last = data.last
 
-    def tail = new ArrayBufferHistorian(benchmark, mode, data.tail)
+    def tail = new ListBasedHistorian(data.tail)
 
-    def +:(elem: Series) = new ArrayBufferHistorian(benchmark, mode, data :+ elem)
+    def +:(elem: Series) = new ListBasedHistorian(data :+ elem)
 
     def length = data.length
 
-    def map[B, That](f: Series => B)(implicit bf: CanBuildFrom[ArrayBuffer[Series], B, That]): That = data map f
+    def map[B, That](f: Series => B)(implicit bf: CanBuildFrom[List[Series], B, That]): That = data map f
 
     def foreach(f: Series => Unit): Unit = data foreach f
 
@@ -112,6 +106,6 @@ object History extends History {
 
   }
 
-  def apply(benchmark: Benchmark, mode: Mode): subHistorian = new ArrayBufferHistorian(benchmark, mode)
+  def apply(): subHistorian = new ListBasedHistorian
 
 }

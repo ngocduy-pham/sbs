@@ -12,18 +12,17 @@ package scala.tools.sbs
 package profiling
 
 import scala.collection.mutable.ArrayBuffer
-
-import ProfBenchmark.Benchmark
+import scala.tools.sbs.benchmark.BenchmarkInfo
 
 /** A {@link RunResult} from a running of {@link Runner}.
   * In the mean time, also a {@link BenchmarkResult} for reporting.
   */
 trait ProfilingResult extends BenchmarkResult
 
-case class ProfilingSuccess(benchmark: Benchmark, profile: Profile)
+case class ProfilingSuccess(info: BenchmarkInfo, profile: Profile)
   extends BenchmarkSuccess with ProfilingResult {
 
-  def benchmarkName = benchmark.info.name
+  def benchmarkName = info.name
 
   def toReport = profile.toReport
 
@@ -31,14 +30,14 @@ case class ProfilingSuccess(benchmark: Benchmark, profile: Profile)
 
 trait ProfilingFailure extends BenchmarkFailure with ProfilingResult
 
-class ProfilingException(val benchmark: Benchmark, exception: Exception)
-  extends ExceptionBenchmarkFailure(benchmark.info.name, exception) with ProfilingFailure
+class ProfilingException(val info: BenchmarkInfo, exception: Exception)
+  extends ExceptionBenchmarkFailure(info.name, exception) with ProfilingFailure
 
 object ProfilingException {
 
-  def apply(benchmark: Benchmark, exception: Exception) = new ProfilingException(benchmark, exception)
+  def apply(info: BenchmarkInfo, exception: Exception) = new ProfilingException(info, exception)
 
-  def unapply(pe: ProfilingException): Option[(Benchmark, Exception)] =
-    Some((pe.benchmark, pe.exception))
+  def unapply(pe: ProfilingException): Option[(BenchmarkInfo, Exception)] =
+    Some((pe.info, pe.exception))
 
 }

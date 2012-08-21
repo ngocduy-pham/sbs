@@ -18,31 +18,40 @@ import scala.tools.sbs.io.Log
 
 /** Measurer for benchmarking on startup state.
   */
-class StartupHarness(val log: Log, val config: Config) extends Measurer with Configured {
+case class StartupHarness(log: Log, config: Config)
+  extends PerformanceMeasurer with PerfBenchmarkCreator with Configured {
 
-  override protected val mode: Mode = StartUpState
+  type MeasurerType = Measurer
 
-  def measure(benchmark: PerfBenchmark.Benchmark): MeasurementResult = {
-    log.info("[Benchmarking startup state]")
+  val mode = StartUpState
 
-    val command   = JVMInvoker(log, config).command(benchmark, config.classpathURLs ++ benchmark.info.classpathURLs)
-    val process   = Process(command)
-    val exitValue = process !
+  trait Measurer extends super.Measurer {
 
-    if (exitValue == 0) {
-      new SeriesAchiever(config, log) achieve (
-        benchmark,
-        _ => true,
-        () => {
-          val start = Platform.currentTime
-          process.!
-          Platform.currentTime - start
-        },
-        false)
+    def measure(benchmark: BenchmarkType): MeasurementResult = {
+      log.info("[Benchmarking startup state]")
+
+      val command = JVMInvoker(log, config).command(benchmark.info, config.classpathURLs ++ benchmark.info.classpathURLs)
+      val process = Process(command)
+      val exitValue = process !
+
+      if (exitValue == 0) {
+        new SeriesAchiever(config, log) achieve (
+          benchmark,
+          _ => true,
+          {
+            val start = Platform.currentTime
+            process.!
+            Platform.currentTime - start
+          },
+          false)
+      }
+      else {
+        new ProcessMeasurementFailure(exitValue)
+      }
     }
-    else {
-      new ProcessMeasurementFailure(exitValue)
-    }
+
   }
+
+  def measurer: MeasurerType = new Measurer {}
 
 }

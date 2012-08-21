@@ -12,69 +12,22 @@ package scala.tools.sbs
 package profiling
 
 import java.lang.reflect.Method
-import java.net.URL
 
-import scala.tools.nsc.io.Path
 import scala.tools.sbs.benchmark.BenchmarkBase
 import scala.tools.sbs.benchmark.BenchmarkInfo
 import scala.tools.sbs.common.ObjectHarness
-import scala.tools.sbs.common.Reflection
 import scala.tools.sbs.common.RunOnlyHarness
-import scala.tools.sbs.io.Log
 
 trait ProfBenchmark extends BenchmarkBase {
+  self: Configured =>
 
-  import ProfBenchmark.Benchmark
+  // format: OFF
+  type BenchmarkType    <: Benchmark
+  type subSnippet       <: BenchmarkType
+  type subInitializable <: BenchmarkType
+  // format: ON
 
-  type subBenchmark     <: Benchmark
-  type subSnippet       <: subBenchmark
-  type subInitializable <: subBenchmark
-
-  class Snippet(info: BenchmarkInfo,
-                val classes: List[String],
-                val exclude: List[String],
-                val methodName: String,
-                val fieldName: String,
-                method: Method,
-                context: ClassLoader,
-                config: Config)
-    extends super.Snippet(info, context, method, config)
-    with Benchmark {
-
-    val howToLaunch = Right(this)
-
-  }
-
-  class Initializable(info: BenchmarkInfo,
-                      benchmarkObject: ProfTemplate,
-                      context: ClassLoader,
-                      config: Config)
-    extends super.Initializable(info, context, benchmarkObject, config)
-    with Benchmark {
-
-    val classes     = benchmarkObject.classes
-    val exclude     = benchmarkObject.exclude
-    val methodName  = benchmarkObject.methodName
-    val fieldName   = benchmarkObject.fieldName
-    val howToLaunch = Left(RunOnlyHarness)
-
-  }
-
-  val classesOpt    = "profile-class"
-  val excludeOpt    = "exclude"
-  val methodNameOpt = "methodname"
-  val fieldNameOpt  = "fieldname"
-
-}
-
-object ProfBenchmark extends ProfBenchmark {
-
-  type subBenchmark     = Benchmark
-  type subSnippet       = Snippet
-  type subInitializable = Initializable
-  type subFactory       = Factory
-
-  trait Benchmark extends BenchmarkBase.Benchmark {
+  trait Benchmark extends super.Benchmark {
 
     /** Names of the classes to be profiled the loading.
       */
@@ -94,48 +47,51 @@ object ProfBenchmark extends ProfBenchmark {
 
     /** How java runs this benchmark independently to sbs.
       * Snippet benchmarks can run on themselves with the method main.
-      * Initializable benchmarks are loaded and run by an ObjectHarness. 
+      * Initializable benchmarks are loaded and run by an ObjectHarness.
       */
     def howToLaunch: Either[ObjectHarness, Benchmark]
 
   }
 
-  private var factory: Option[Factory] = None
+  class Snippet(info: BenchmarkInfo,
+                val classes: List[String],
+                val exclude: List[String],
+                val methodName: String,
+                val fieldName: String,
+                method: Method,
+                context: ClassLoader,
+                config: Config)
+    extends super.Snippet(info, context, method, config) with Benchmark {
 
-  def factory(_log: Log, _config: Config) = factory getOrElse {
+    val howToLaunch = Right(this)
 
-    val newFactory = new Factory with Configured {
-
-      val log: Log = _log
-      val config: Config = _config
-
-      def createFrom(info: BenchmarkInfo): Benchmark = {
-        val argMap = BenchmarkInfo.readInfo(
-          argFromSrc(info.src),
-          List(classesOpt, excludeOpt, methodNameOpt, fieldNameOpt) map toOption)
-        load(
-          info,
-          (method: Method, context: ClassLoader) => new Snippet(
-            info,
-            getIntoOrElse(argMap get classesOpt, stringToList, config.classes),
-            getIntoOrElse(argMap get excludeOpt, stringToList, config.exclude),
-            argMap getOrElse (methodNameOpt, config.methodName),
-            argMap getOrElse (fieldNameOpt, config.fieldName),
-            method,
-            context,
-            config),
-          (context: ClassLoader) => new Initializable(
-            info,
-            Reflection(config, log).getObject[ProfTemplate](info.name, config.classpathURLs ++ info.classpathURLs),
-            context,
-            config),
-          classOf[ProfTemplate].getName)
-      }
-
-    }
-
-    factory = Some(newFactory)
-    newFactory
   }
+
+  class Initializable(info: BenchmarkInfo,
+                      benchmarkObject: ProfTemplate,
+                      context: ClassLoader,
+                      config: Config)
+    extends super.Initializable(info, context, benchmarkObject, config) with Benchmark {
+
+    // format: OFF
+    val classes     = benchmarkObject.classes
+    val exclude     = benchmarkObject.exclude
+    val methodName  = benchmarkObject.methodName
+    val fieldName   = benchmarkObject.fieldName
+    val howToLaunch = Left(RunOnlyHarness)
+    // format: ON
+
+  }
+
+}
+
+object ProfBenchmark {
+
+  // format: OFF
+  val classesOpt    = "profile-class"
+  val excludeOpt    = "exclude"
+  val methodNameOpt = "methodname"
+  val fieldNameOpt  = "fieldname"
+  // format: ON
 
 }

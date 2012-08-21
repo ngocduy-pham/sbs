@@ -40,23 +40,24 @@ import com.sun.jdi.VirtualMachine
   */
 class InvocationRecorder(val config: Config,
                          val log: Log,
-                         val benchmark: PinpointBenchmark.Benchmark,
+                         val benchmark: PinpointBenchmark#Benchmark,
                          val instrumentedPath: Directory,
                          val storagePath: Directory)
   extends JDI
   with PreviousVersionExploiter
   with Configured {
 
+  // format: OFF
   val className  = benchmark.className
   val methodName = benchmark.methodName
 
-  def isMatchOK          = currentGraph matches previousGraph
-  val currentGraph       = record(config.classpathURLs ++ benchmark.info.classpathURLs)
-  lazy val previousGraph = exploit(
-    benchmark.previous,
-    benchmark.context,
-    config.classpathURLs ++ benchmark.info.classpathURLs,
-    record)
+  lazy val isMatchOK     = currentGraph matches previousGraph
+  lazy val currentGraph  = record(config.classpathURLs ++ benchmark.info.classpathURLs)
+  lazy val previousGraph = exploit(benchmark.previous,
+                                   benchmark.context,
+                                   config.classpathURLs ++ benchmark.info.classpathURLs,
+                                   record)
+  // format: ON
 
   private def record(classpathURLs: List[URL]): InvocationGraph = {
     val jvm = new Launcher {} launch benchmark
@@ -84,10 +85,11 @@ class InvocationRecorder(val config: Config,
       */
     protected val traceMap = new HashMap[ThreadReference, ThreadTrace]()
 
-    /** The resulting graph.
+    /** Builder for the resulting graph.
       */
-    protected val graph = new InvocationGraph
+    protected val graphBuilder = new GraphBuilder
 
+    // format: OFF
     private val pinpointClassRequest  = eventRequestManager.createClassPrepareRequest
     private val pinpointMethodRequest = eventRequestManager.createMethodEntryRequest
     private val methodEntryRequest    = eventRequestManager.createMethodEntryRequest
@@ -95,6 +97,7 @@ class InvocationRecorder(val config: Config,
 
     private var pinpointThread = None : Option[ThreadReference]
     private var layer          = 0
+    // format: ON
 
     /** This class keeps context on events in one thread.
       */
@@ -127,18 +130,18 @@ class InvocationRecorder(val config: Config,
 
             pinpointThread = Some(thread)
 
-	        methodEntryRequest setSuspendPolicy EventRequest.SUSPEND_ALL
+            methodEntryRequest setSuspendPolicy EventRequest.SUSPEND_ALL
             methodEntryRequest.enable
 
             methodExitRequest setSuspendPolicy EventRequest.SUSPEND_ALL
             methodExitRequest.enable
 
-	        pinpointMethodRequest.disable
-	      }
+            pinpointMethodRequest.disable
+          }
         }
         else {
           layer += 1
-          if (layer == 1) graph.add(clazz, method, event.method.signature)
+          if (layer == 1) graphBuilder.add(clazz, method, event.method.signature)
           log.verbose("enter " + clazz + "." + method + " [layer: " + layer + "]")
         }
       }
@@ -171,7 +174,7 @@ class InvocationRecorder(val config: Config,
 
       while (connected) {
         try {
-          val eventSet      = queue.remove()
+          val eventSet = queue.remove()
           val eventIterator = eventSet.eventIterator
 
           while (eventIterator hasNext) {
@@ -188,7 +191,7 @@ class InvocationRecorder(val config: Config,
         }
       }
 
-      return graph
+      return graphBuilder.result
     }
 
     /** Create the desired event requests, and enable them so that we will get events.

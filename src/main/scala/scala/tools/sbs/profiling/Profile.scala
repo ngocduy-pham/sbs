@@ -11,7 +11,7 @@
 package scala.tools.sbs
 package profiling
 
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.ListBuffer
 
 /** Class holds the profiling result.
   */
@@ -19,14 +19,11 @@ class Profile {
 
   /** All classes loaded in a benchmark running.
     */
-  val classes = ArrayBuffer[LoadedClass]()
-
-  def loadClass(name: String) {
-    classes += LoadedClass(name)
-  }
+  private val _classes = ListBuffer[LoadedClass]()
+  def classes = _classes.toList
 
   def loadClass(clazz: LoadedClass) {
-    classes += clazz
+    _classes += clazz
   }
 
   /** Number of boxing.
@@ -44,6 +41,7 @@ class Profile {
   def unbox {
     unboxing += 1
   }
+
   /** Number of steps performed.
     */
   private var steps = 0
@@ -60,9 +58,9 @@ class Profile {
 
   def toReport =
     (classes flatMap (_.toReport)) ++
-      (if (steps > 0) ArrayBuffer("  all steps performed: " + steps) else Nil) ++
-      (if (boxing > 0) ArrayBuffer("  boxing: " + boxing) else Nil) ++
-      (if (unboxing > 0) ArrayBuffer("  unboxing: " + boxing) else Nil) ++
+      (if (steps > 0) List("  all steps performed: " + steps) else Nil) ++
+      (if (boxing > 0) List("  boxing: " + boxing) else Nil) ++
+      (if (unboxing > 0) List("  unboxing: " + boxing) else Nil) ++
       (if (memoryActivity != null) memoryActivity.toReport else Nil)
 
   def toXML =
@@ -74,4 +72,8 @@ class Profile {
       <memoryUsage>{ memoryActivity.toXML }</memoryUsage>
     </profile>
 
+}
+
+object Profile {
+  implicit def string2LoadedClass(name: String): LoadedClass = LoadedClass(name)
 }

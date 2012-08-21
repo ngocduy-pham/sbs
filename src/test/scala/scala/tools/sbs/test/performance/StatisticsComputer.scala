@@ -10,7 +10,7 @@ import scala.tools.sbs.performance.Series
 
 import org.scalatest.Spec
 
-class StatisticsComputer extends Spec {
+class StatisticsComputer extends Spec with PerformanceTest {
 
   val computer = Statistics(testConfig, testLog)
 
@@ -280,9 +280,9 @@ class StatisticsComputer extends Spec {
           310),
         99)
 
-      val history = History(DummyBenchmark, SteadyState)
+      val history = History()
       history add previous
-      val ret = computer.testDifference(DummyBenchmark, current, history)
+      val ret = computer.testDifference(DummyBenchmark.info, current, history)
       ret.toReport foreach println
     }
 

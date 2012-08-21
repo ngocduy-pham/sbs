@@ -13,7 +13,7 @@ package performance
 
 import scala.collection.mutable.ArrayBuffer
 import scala.math.sqrt
-import scala.tools.sbs.benchmark.BenchmarkBase.Benchmark
+import scala.tools.sbs.benchmark.BenchmarkInfo
 import scala.tools.sbs.io.Log
 
 import org.apache.commons.math.distribution.FDistributionImpl
@@ -196,17 +196,17 @@ trait Statistics {
       *
       * @return	The test result
       */
-    def testDifference(benchmark: Benchmark,
+    def testDifference(info: BenchmarkInfo,
                        current: Series,
                        historian: History.Historian): RegressionResult = {
       if (historian.length < 1) {
         throw new Exception("Not enough result files specified")
       }
       if (historian.length == 1) {
-        testConfidenceIntervals(benchmark, current, historian)
+        testConfidenceIntervals(info, current, historian)
       }
       else {
-        testANOVA(benchmark, current, historian)
+        testANOVA(info, current, historian)
       }
     }
 
@@ -219,7 +219,7 @@ trait Statistics {
       *
       * @return	The test result
       */
-    private def testConfidenceIntervals(benchmark: Benchmark,
+    private def testConfidenceIntervals(info: BenchmarkInfo,
                                         current: Series,
                                         historian: History.Historian): RegressionResult = {
       val currentMean  = mean(current)
@@ -234,10 +234,10 @@ trait Statistics {
 
       if ((current.confidenceLevel == 100) && (previous.confidenceLevel == 100) && !slower) {
         CIRegressionSuccess(
-          benchmark,
+          info.name,
           100,
           (currentMean, currentSD),
-          ArrayBuffer((previousMean, previousSD)),
+          List((previousMean, previousSD)),
           (0, 0))
       }
       else {
@@ -273,15 +273,15 @@ trait Statistics {
         }
 
         if (!ok && slower) CIRegressionFailure(
-          benchmark,
+          info.name,
           (currentMean, currentSD),
-          ArrayBuffer((previousMean, previousSD)),
+          List((previousMean, previousSD)),
           (ciLeft, ciRight))
         else CIRegressionSuccess(
-          benchmark,
+          info.name,
           confidenceLevel,
           (currentMean, currentSD),
-          ArrayBuffer((previousMean, previousSD)),
+          List((previousMean, previousSD)),
           (ciLeft, ciRight))
       }
     }
@@ -295,7 +295,7 @@ trait Statistics {
       *
       * @return	The test result
       */
-    private def testANOVA(benchmark: Benchmark,
+    private def testANOVA(info: BenchmarkInfo,
                           current: Series,
                           historian: History.Historian): RegressionResult = {
 
@@ -320,7 +320,7 @@ trait Statistics {
         // Memory case
         if ((SSA != 0) && slower) {
           ANOVARegressionFailure(
-            benchmark,
+            info.name,
             (currentMean, currentSD),
             historyMeanAndSDs,
             SSA,
@@ -330,7 +330,7 @@ trait Statistics {
         }
         else {
           ANOVARegressionSuccess(
-            benchmark,
+            info.name,
             100,
             (currentMean, currentSD),
             historyMeanAndSDs,
@@ -361,7 +361,7 @@ trait Statistics {
         }
 
         if (!ok && slower) ANOVARegressionFailure(
-          benchmark,
+          info.name,
           (currentMean, currentSD),
           historyMeanAndSDs,
           SSA,
@@ -369,7 +369,7 @@ trait Statistics {
           FValue,
           F)
         else ANOVARegressionSuccess(
-          benchmark,
+          info.name,
           confidenceLevel,
           (currentMean, currentSD),
           historyMeanAndSDs,
@@ -416,7 +416,7 @@ object Statistics extends Statistics {
 
     def confidenceLevel: Int
 
-    def testDifference(benchmark: Benchmark,
+    def testDifference(info: BenchmarkInfo,
                        current: Series,
                        historian: History.Historian): RegressionResult
 

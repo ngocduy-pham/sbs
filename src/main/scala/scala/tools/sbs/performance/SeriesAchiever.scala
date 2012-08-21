@@ -16,7 +16,7 @@ import scala.tools.sbs.io.Log
 
 /** Runs and measures metrics of a benchmark in general case.
   */
-class SeriesAchiever(config: Config, log: Log) {
+class SeriesAchiever[BenchmarkType <: PerfBenchmark#Benchmark](config: Config, log: Log) {
 
   /** Warms the benchmark up if necessary and measures the desired metric.
     *
@@ -25,9 +25,9 @@ class SeriesAchiever(config: Config, log: Log) {
     *
     * @return	The result if success, otherwies a `String` describes the reason.
     */
-  def achieve(benchmark: PerfBenchmark.Benchmark,
+  def achieve(benchmark: BenchmarkType,
               checkWarm: Series => Boolean,
-              measure: () => Long,
+              measure: => Long,
               newlyAchieve: Boolean = true): MeasurementResult = {
 
     var series = new Series(config, log)
@@ -40,7 +40,7 @@ class SeriesAchiever(config: Config, log: Log) {
       series.clear()
       for (_ <- 1 to benchmark.measurement) {
         cleanUp()
-        series += measure()
+        series += measure
         log.verbose("    Measured      " + series.last)
       }
     }
@@ -54,7 +54,7 @@ class SeriesAchiever(config: Config, log: Log) {
       while (warmCount < warmMax && !checkWarm(series)) {
         series.remove(0)
         cleanUp()
-        series += measure()
+        series += measure
 
         log.verbose("    Measured      " + series.last)
 

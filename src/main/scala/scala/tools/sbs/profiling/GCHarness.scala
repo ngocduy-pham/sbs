@@ -16,18 +16,15 @@ import java.lang.management.ManagementFactory
 import scala.collection.JavaConverters.asScalaBufferConverter
 import scala.tools.sbs.performance.MeasurementHarness
 import scala.tools.sbs.performance.MeasurementResult
-
-import ProfBenchmark.Benchmark
+import scala.tools.sbs.performance.PerfBenchmarkCreator
 
 /** Extracts garbage collection information.
  */
-object GCHarness extends MeasurementHarness[Benchmark] {
+object GCHarness extends MeasurementHarness with PerfBenchmarkCreator with Configured {
 
   override val mode = Profiling
 
-  protected val upperBound = manifest[ProfBenchmark.Benchmark]
-
-  def measure(benchmark: Benchmark): MeasurementResult = {
+  def measure(benchmark: BenchmarkType): MeasurementResult = {
     val gcMXBeans = ManagementFactory.getGarbageCollectorMXBeans.asScala.toList
     val memMXBean = ManagementFactory.getMemoryMXBean
 

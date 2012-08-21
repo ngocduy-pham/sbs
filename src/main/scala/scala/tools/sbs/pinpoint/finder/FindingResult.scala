@@ -12,34 +12,33 @@ package scala.tools.sbs
 package pinpoint
 package finder
 
-import scala.collection.mutable.ArrayBuffer
-import scala.tools.sbs.benchmark.BenchmarkBase.Benchmark
+import scala.tools.sbs.benchmark.BenchmarkInfo
 import scala.tools.sbs.performance.CIRegression
 
 trait FindingResult extends ScrutinyResult {
 
-  def benchmark: Benchmark
+  def info: BenchmarkInfo
 
-  def benchmarkName = benchmark.info.name
+  def benchmarkName = info.name
 
 }
 
-case class RegressionPoint(benchmark: PinpointBenchmark.Benchmark,
+case class RegressionPoint(info: BenchmarkInfo,
                            position: InvocationGraph,
                            current: (Double, Double),
-                           previous: ArrayBuffer[(Double, Double)],
+                           previous: List[(Double, Double)],
                            CI: (Double, Double))
   extends FindingResult
   with CIRegression
   with ScrutinySuccess {
 
   override def toReport = {
-    ArrayBuffer(
+    List(
       "Regression found:",
       "  from method call " +
         position.first.prototype + " at the " + position.startOrdinum + " time of its invocations") ++
       (if (position.length > 1)
-        ArrayBuffer("  to method call " +
+        List("  to method call " +
         position.last.prototype + " at the " + position.endOrdinum, " time of its invocations")
       else Nil) ++
       super[CIRegression].toReport
@@ -47,16 +46,16 @@ case class RegressionPoint(benchmark: PinpointBenchmark.Benchmark,
 
 }
 
-case class NoRegression(benchmark: PinpointBenchmark.Benchmark,
+case class NoRegression(info: BenchmarkInfo,
                         confidenceLevel: Int,
                         current: (Double, Double),
-                        previous: ArrayBuffer[(Double, Double)],
+                        previous: List[(Double, Double)],
                         CI: (Double, Double))
   extends FindingResult
   with CIRegression
   with ScrutinyFailure {
 
-  override def toReport = ArrayBuffer("No regression found", "") ++ super[CIRegression].toReport
+  override def toReport = List("No regression found", "") ++ super[CIRegression].toReport
 
 }
   

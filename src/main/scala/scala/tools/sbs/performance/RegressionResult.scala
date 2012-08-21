@@ -11,35 +11,30 @@
 package scala.tools.sbs
 package performance
 
-import scala.collection.mutable.ArrayBuffer
-import scala.tools.sbs.benchmark.BenchmarkBase.Benchmark
 import scala.tools.sbs.util.Constant
 
 /** Represents the result of a benchmarking (of one benchmark on one {@link BenchmarkMode}).
   */
 trait RegressionResult extends BenchmarkResult
 
-abstract class RegressionSuccess(benchmark: Benchmark)
-  extends RegressionResult
-  with BenchmarkSuccess {
+abstract class RegressionSuccess(val benchmarkName: String) extends RegressionResult with BenchmarkSuccess {
 
   def confidenceLevel: Int
-  def benchmarkName = benchmark.info.name
 
 }
 
 trait RegressionDetected {
 
   def current: (Double, Double)
-  def previous: ArrayBuffer[(Double, Double)]
+  def previous: List[(Double, Double)]
 
-  def toReport = ArrayBuffer(
+  def toReport = List(
     Constant.INDENT + "New approach sample mean: " + current._1.formatted("%.2f") +
       " +- " + current._2.formatted("%.2f"),
     Constant.INDENT + "History sample mean:      ") ++
-    (previous./:(ArrayBuffer[String]())((lines, m) => lines :+
+    (List[String]() /: previous)((lines, m) => lines :+
       Constant.INDENT + "                          " + m._1.formatted("%.2f") +
-      " +- " + m._2.formatted("%.2f")))
+      " +- " + m._2.formatted("%.2f"))
 
 }
 
@@ -49,6 +44,7 @@ trait CIRegression extends RegressionDetected {
 
   override def toReport = super.toReport :+
     (Constant.INDENT + "Confidence interval:      [" + CI._1.formatted("%.2f") + "; " + CI._2.formatted("%.2f") + "]")
+
 }
 
 trait ANOVARegression extends RegressionDetected {
@@ -70,59 +66,46 @@ trait ANOVARegression extends RegressionDetected {
 
 }
 
-case class CIRegressionSuccess(benchmark: Benchmark,
+case class CIRegressionSuccess(name: String,
                                confidenceLevel: Int,
                                current: (Double, Double),
-                               previous: ArrayBuffer[(Double, Double)],
-                               CI: (Double, Double))
-  extends RegressionSuccess(benchmark)
-  with CIRegression
+                               previous: List[(Double, Double)],
+                               CI: (Double, Double)) extends RegressionSuccess(name) with CIRegression
 
-case class ANOVARegressionSuccess(benchmark: Benchmark,
+case class ANOVARegressionSuccess(name: String,
                                   confidenceLevel: Int,
                                   current: (Double, Double),
-                                  previous: ArrayBuffer[(Double, Double)],
+                                  previous: List[(Double, Double)],
                                   SSA: Double,
                                   SSE: Double,
                                   FValue: Double,
-                                  F: Double)
-  extends RegressionSuccess(benchmark)
-  with ANOVARegression
+                                  F: Double) extends RegressionSuccess(name) with ANOVARegression
 
-case class NoPreviousMeasurement(benchmark: Benchmark, measurementSuccess: MeasurementSuccess)
+case class NoPreviousMeasurement(benchmarkName: String, measurementSuccess: MeasurementSuccess)
   extends RegressionResult with BenchmarkSuccess {
 
-  def benchmarkName = benchmark.info.name
-  def toReport      = ArrayBuffer(Constant.INDENT + "No previous measurement result to detect regression")
+  def toReport = List(Constant.INDENT + "No previous measurement result to detect regression")
 
 }
 
-abstract class RegressionFailure(benchmark: Benchmark) extends RegressionResult with BenchmarkFailure {
+abstract class RegressionFailure(val benchmarkName: String) extends RegressionResult with BenchmarkFailure
 
-  def benchmarkName = benchmark.info.name
-
-}
-
-case class CIRegressionFailure(benchmark: Benchmark,
+case class CIRegressionFailure(name: String,
                                current: (Double, Double),
-                               previous: ArrayBuffer[(Double, Double)],
-                               CI: (Double, Double))
-  extends RegressionFailure(benchmark)
-  with CIRegression
+                               previous: List[(Double, Double)],
+                               CI: (Double, Double)) extends RegressionFailure(name) with CIRegression
 
-case class ANOVARegressionFailure(benchmark: Benchmark,
+case class ANOVARegressionFailure(name: String,
                                   current: (Double, Double),
-                                  previous: ArrayBuffer[(Double, Double)],
+                                  previous: List[(Double, Double)],
                                   SSA: Double,
                                   SSE: Double,
                                   FValue: Double,
-                                  F: Double)
-  extends RegressionFailure(benchmark)
-  with ANOVARegression
+                                  F: Double) extends RegressionFailure(name) with ANOVARegression
 
-case class ImmeasurableFailure(benchmark: Benchmark, failure: MeasurementFailure)
-  extends RegressionFailure(benchmark) {
+case class ImmeasurableFailure(name: String, failure: MeasurementFailure)
+  extends RegressionFailure(name) {
 
-  def toReport = ArrayBuffer(Constant.INDENT + failure.reason)
+  def toReport = List(Constant.INDENT + failure.reason)
 
 }

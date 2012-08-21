@@ -17,6 +17,7 @@ import scala.collection.JavaConverters.asScalaBufferConverter
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.Stack
 import scala.tools.sbs.io.Log
+import scala.tools.sbs.profiling.Profile.string2LoadedClass
 
 import com.sun.jdi.event.AccessWatchpointEvent
 import com.sun.jdi.event.ClassPrepareEvent
@@ -38,11 +39,10 @@ import com.sun.jdi.ThreadReference
 import com.sun.jdi.VMDisconnectedException
 import com.sun.jdi.VirtualMachine
 
-import ProfBenchmark.Benchmark
+class JDIProfiler(val config: Config, val log: Log)
+  extends Profiler with JDI with ProfBenchmarkCreator with Configured {
 
-class JDIProfiler(val config: Config, val log: Log) extends Profiler with JDI with Configured {
-
-  protected def profile(benchmark: ProfBenchmark.Benchmark): ProfilingResult = {
+  def profile(benchmark: BenchmarkType): ProfilingResult = {
 
     val jvm = new Launcher {} launch benchmark
 
@@ -50,7 +50,7 @@ class JDIProfiler(val config: Config, val log: Log) extends Profiler with JDI wi
       log.error(exc.toString)
       log.error(exc.getStackTraceString)
       jvm.exit(1)
-      ProfilingException(benchmark, exc)
+      ProfilingException(benchmark.info, exc)
     }
 
     try {
@@ -64,10 +64,10 @@ class JDIProfiler(val config: Config, val log: Log) extends Profiler with JDI wi
         }
 
       if (config.shouldGC) {
-        new MemoryProfiler(log, config).profile(benchmark, profile)
+        new MemoryProfiler(log, config).profile(benchmark.info, profile)
       }
       else {
-        ProfilingSuccess(benchmark, profile)
+        ProfilingSuccess(benchmark.info, profile)
       }
     }
     catch {
@@ -76,7 +76,7 @@ class JDIProfiler(val config: Config, val log: Log) extends Profiler with JDI wi
     }
   }
 
-  class Handler(benchmark: ProfBenchmark.Benchmark) extends super.Handler[Profile] {
+  class Handler(benchmark: BenchmarkType) extends super.Handler[Profile] {
 
     val primitives =
       List("scala.Int", "scala.Short", "scala.Long", "scala.Double",

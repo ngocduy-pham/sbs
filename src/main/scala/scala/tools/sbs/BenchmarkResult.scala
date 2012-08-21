@@ -1,31 +1,39 @@
 package scala.tools.sbs
 
-import scala.collection.mutable.ArrayBuffer
-import scala.tools.sbs.benchmark.BenchmarkInfo
 import scala.tools.sbs.util.Constant
 
 trait BenchmarkResult {
 
   def benchmarkName: String
-  def toReport: ArrayBuffer[String]
+
+  def toReport: List[String]
+
+  def isSuccess: Boolean
 
 }
 
-trait BenchmarkSuccess extends BenchmarkResult
+trait BenchmarkSuccess extends BenchmarkResult {
+ 
+  final def isSuccess = true
 
-trait BenchmarkFailure extends BenchmarkResult
+}
 
-case class CompileBenchmarkFailure(info: BenchmarkInfo) extends BenchmarkFailure {
+trait BenchmarkFailure extends BenchmarkResult {
 
-  def benchmarkName = info.name
-  def toReport      = ArrayBuffer(Constant.INDENT + "Compiling benchmark failed")
+  final def isSuccess = false
+
+}
+
+case class CompileBenchmarkFailure(benchmarkName: String) extends BenchmarkFailure {
+
+  def toReport = List(Constant.INDENT + "Compiling benchmark failed")
 
 }
 
 case class ExceptionBenchmarkFailure(benchmarkName: String, exception: Exception) extends BenchmarkFailure {
 
   def toReport =
-    ArrayBuffer((exception.toString split "\n" map (Constant.INDENT + _)) ++
+    List((exception.toString split "\n" map (Constant.INDENT + _)) ++
       (exception.getStackTraceString split "\n" map (Constant.INDENT + "  " + _)): _*)
 
 }
@@ -34,31 +42,33 @@ case class ExceptionBenchmarkFailure(benchmarkName: String, exception: Exception
   */
 class ResultPack {
 
-  private var modes       = ArrayBuffer[ReportMode](new ReportMode(DummyMode))
+  // format: OFF
+  private var modes       = List(new ReportMode(DummyMode))
   private def currentMode = modes.last
 
   def switchMode(mode: Mode)            = modes :+= new ReportMode(mode)
   def add(newResult: BenchmarkResult)   = currentMode add newResult
   def foreach(mode: ReportMode => Unit) = modes foreach mode
 
-  def total   = modes./:(0)((total, mode) => total + mode.results.length)
+  def total   = (0 /: modes)(_ + _.results.length)
   def ok      = success.length
   def failed  = total - ok
-  def success = modes./:(ArrayBuffer[BenchmarkResult]())((arr, mode) => arr ++ mode.success)
-  def failure = modes./:(ArrayBuffer[BenchmarkResult]())((arr, mode) => arr ++ mode.failure)
+  def success = (List[BenchmarkResult]() /: modes)(_ ++ _.success)
+  def failure = (List[BenchmarkResult]() /: modes)(_ ++ _.failure)
+  // format: ON
 
 }
 
 class ReportMode(mode: Mode) {
 
-  private var _results = ArrayBuffer[BenchmarkResult]()
+  private var _results: List[BenchmarkResult] = Nil
   def results = _results
 
-  def add(newResult: BenchmarkResult)     = _results += newResult
+  def add(newResult: BenchmarkResult) = _results :+= newResult
   def foreach(f: BenchmarkResult => Unit) = results foreach f
 
-  def success  = results filterNot (failure contains _)
-  def failure  = results filter (_.isInstanceOf[BenchmarkFailure])
+  def success  = results filter (_ isSuccess)
+  def failure  = results filterNot (_ isSuccess)
   def toReport = "[" + mode.description + "]"
 
 }

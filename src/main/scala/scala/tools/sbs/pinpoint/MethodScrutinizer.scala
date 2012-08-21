@@ -13,37 +13,39 @@ package pinpoint
 
 import scala.tools.nsc.io.Path.string2path
 import scala.tools.sbs.io.Log
-import scala.tools.sbs.pinpoint.finder.BinaryWrapper
-import scala.tools.sbs.pinpoint.finder.DiggingWrapper
-import scala.tools.sbs.pinpoint.finder.FinderFactory
+import scala.tools.sbs.pinpoint.finder.DiggingRegressionFinder
 
-class MethodScrutinizer(val config: Config, val log: Log) extends Scrutinizer with Configured {
+case class MethodScrutinizer(config: Config, log: Log)
+  extends Scrutinizer
+  with MethodRegressionDetector
+  with DiggingRegressionFinder
+  with PinpointBenchmarkCreator
+  with Configured {
 
-  def scrutinize(benchmark: PinpointBenchmark.Benchmark): ScrutinyResult = {
+  // format: OFF
+  type FinderType   = Finder
+  type DetectorType = Detector
 
-    val instrumentedPath = config.bin / ".instrumented" createDirectory ()
-    val storage = config.bin / ".backup" createDirectory ()
+  val instrumentedPath = (config.bin / ".instrumented").createDirectory()
+  val storagePath      = (config.bin / ".backup").createDirectory()
 
-    val detector = ScrutinyRegressionDetectorFactory(config, log, benchmark, instrumentedPath, storage)
+  override def run(benchmark: BenchmarkType)      = super[Scrutinizer].run(benchmark)
+  override def generate(benchmark: BenchmarkType) = super[Scrutinizer].generate(benchmark)
+  // format: ON
 
-    detector detect benchmark match {
+  def scrutinize(benchmark: BenchmarkType): ScrutinyResult =
+    regressionDetect(benchmark) match {
       case regressionSuccess: ScrutinyCIRegressionSuccess => regressionSuccess
       case regressionFailure: ScrutinyCIRegressionFailure if (config.pinpointBottleneckDectect) =>
-        try {
-          FinderFactory(
-            config,
-            log,
-            benchmark,
-            benchmark.className,
-            benchmark.methodName,
-            instrumentedPath,
-            storage) find ()
-        }
-        catch {
-          case _: MismatchExpressionList => regressionFailure
-        }
+        try { regressionFind(benchmark) }
+        catch { case _: MismatchExpressionList => regressionFailure }
       case anythingelse => anythingelse
     }
-  }
+
+  def regressionFinder(pinpointBenchmark: BenchmarkType): FinderType =
+    new Finder { val benchmark = pinpointBenchmark }
+
+  def regressionDetector(pinpointBenchmark: BenchmarkType): DetectorType =
+    new Detector { val benchmark = pinpointBenchmark }
 
 }

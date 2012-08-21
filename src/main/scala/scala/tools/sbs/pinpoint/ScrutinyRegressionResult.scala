@@ -11,8 +11,6 @@
 package scala.tools.sbs
 package pinpoint
 
-import scala.collection.mutable.ArrayBuffer
-import scala.tools.sbs.benchmark.BenchmarkBase.Benchmark
 import scala.tools.sbs.performance.CIRegressionFailure
 import scala.tools.sbs.performance.CIRegressionSuccess
 import scala.tools.sbs.performance.ImmeasurableFailure
@@ -20,13 +18,13 @@ import scala.tools.sbs.performance.MeasurementFailure
 
 trait ScrutinyRegressionResult extends ScrutinyResult
 
-class ScrutinyCIRegressionSuccess(_benchmark: Benchmark,
+class ScrutinyCIRegressionSuccess(_benchmarkName: String,
                                   _confidenceLevel: Int,
                                   _current: (Double, Double),
-                                  _previous: ArrayBuffer[(Double, Double)],
+                                  _previous: List[(Double, Double)],
                                   _CI: (Double, Double))
   extends CIRegressionSuccess(
-    _benchmark,
+    _benchmarkName,
     _confidenceLevel,
     _current,
     _previous,
@@ -36,7 +34,7 @@ class ScrutinyCIRegressionSuccess(_benchmark: Benchmark,
 
   def this(CISuccess: CIRegressionSuccess) =
     this(
-      CISuccess.benchmark,
+      CISuccess.benchmarkName,
       CISuccess.confidenceLevel,
       CISuccess.current,
       CISuccess.previous,
@@ -46,30 +44,30 @@ class ScrutinyCIRegressionSuccess(_benchmark: Benchmark,
 
 object ScrutinyCIRegressionSuccess {
 
-  def apply(benchmark: Benchmark,
+  def apply(benchmarkName: String,
             confidenceLevel: Int,
             current: (Double, Double),
-            previous: ArrayBuffer[(Double, Double)],
+            previous: List[(Double, Double)],
             CI: (Double, Double)): ScrutinyCIRegressionSuccess =
-    new ScrutinyCIRegressionSuccess(benchmark, confidenceLevel, current, previous, CI)
+    new ScrutinyCIRegressionSuccess(benchmarkName, confidenceLevel, current, previous, CI)
 
   def apply(CISuccess: CIRegressionSuccess): ScrutinyCIRegressionSuccess =
     new ScrutinyCIRegressionSuccess(CISuccess)
 
   def unapply(srs: ScrutinyCIRegressionSuccess) =
-    if (true) Some(srs.benchmark, srs.confidenceLevel, srs.current, srs.previous, srs.CI)
+    if (true) Some(srs.benchmarkName, srs.confidenceLevel, srs.current, srs.previous, srs.CI)
     else None // Force return type to Option[], 'cause it's too long to be explicitly written :(
 
 }
 
 trait ScrutinyRegressionFailure extends ScrutinyFailure with ScrutinyRegressionResult
 
-class ScrutinyCIRegressionFailure(_benchmark: Benchmark,
+class ScrutinyCIRegressionFailure(_benchmarkName: String,
                                   _current: (Double, Double),
-                                  _previous: ArrayBuffer[(Double, Double)],
+                                  _previous: List[(Double, Double)],
                                   _CI: (Double, Double))
   extends CIRegressionFailure(
-    _benchmark,
+    _benchmarkName,
     _current,
     _previous,
     _CI)
@@ -77,7 +75,7 @@ class ScrutinyCIRegressionFailure(_benchmark: Benchmark,
 
   def this(CIFailure: CIRegressionFailure) =
     this(
-      CIFailure.benchmark,
+      CIFailure.benchmarkName,
       CIFailure.current,
       CIFailure.previous,
       CIFailure.CI)
@@ -86,42 +84,42 @@ class ScrutinyCIRegressionFailure(_benchmark: Benchmark,
 
 object ScrutinyCIRegressionFailure {
 
-  def apply(benchmark: Benchmark,
+  def apply(benchmarkName: String,
             current: (Double, Double),
-            previous: ArrayBuffer[(Double, Double)],
-            meansAndSD: ArrayBuffer[(Double, Double)],
+            previous: List[(Double, Double)],
+            meansAndSD: List[(Double, Double)],
             CI: (Double, Double)): ScrutinyCIRegressionFailure =
-    new ScrutinyCIRegressionFailure(benchmark, current, previous, CI)
+    new ScrutinyCIRegressionFailure(benchmarkName, current, previous, CI)
 
   def apply(CISuccess: CIRegressionFailure): ScrutinyCIRegressionFailure =
     new ScrutinyCIRegressionFailure(CISuccess)
 
   def unapply(srs: ScrutinyCIRegressionFailure) =
-    if (true) Some(srs.benchmark, srs.current, srs.previous, srs.CI)
+    if (true) Some(srs.benchmarkName, srs.current, srs.previous, srs.CI)
     else None // Force return type to Option[], 'cause it's too long to be explicitly written :(
 
 }
 
-class ScrutinyImmeasurableFailure(_benchmark: Benchmark,
+class ScrutinyImmeasurableFailure(_benchmarkName: String,
                                   _failure: MeasurementFailure)
   extends ImmeasurableFailure(
-    _benchmark,
+    _benchmarkName,
     _failure: MeasurementFailure)
   with ScrutinyRegressionFailure {
 
-  def this(imf: ImmeasurableFailure) = this(imf.benchmark, imf.failure)
+  def this(imf: ImmeasurableFailure) = this(imf.benchmarkName, imf.failure)
 
 }
 
 object ScrutinyImmeasurableFailure {
 
-  def apply(benchmark: Benchmark, failure: MeasurementFailure): ScrutinyImmeasurableFailure =
-    new ScrutinyImmeasurableFailure(benchmark, failure)
+  def apply(benchmarkName: String, failure: MeasurementFailure): ScrutinyImmeasurableFailure =
+    new ScrutinyImmeasurableFailure(benchmarkName, failure)
 
   def apply(imf: ImmeasurableFailure): ScrutinyImmeasurableFailure =
     new ScrutinyImmeasurableFailure(imf)
 
-  def unpply(sif: ScrutinyImmeasurableFailure): Option[(Benchmark, MeasurementFailure)] =
-    Some(sif.benchmark, sif.failure)
+  def unpply(sif: ScrutinyImmeasurableFailure): Option[(String, MeasurementFailure)] =
+    Some(sif.benchmarkName, sif.failure)
 
 }

@@ -12,20 +12,14 @@ package scala.tools.sbs
 package pinpoint
 package strategy
 
-import java.net.URL
-
-import scala.tools.sbs.io.Log
-import scala.tools.sbs.performance.MeasurementResult
-import scala.tools.sbs.performance.PerfBenchmark
 import scala.tools.sbs.performance.SubJVMMeasurer
 
-class SubJVMPinpointMeasurer(log: Log, config: Config)
-  extends SubJVMMeasurer(log, config, Pinpointing, PinpointHarness)
-  with PinpointMeasurer {
+trait SubJVMPinpointMeasurer extends SubJVMMeasurer {
+  self: PinpointBenchmark with Configured =>
 
-  /** Bridge method.
-   */
-  def measure(benchmark: PinpointBenchmark.Benchmark, classpathURLs: List[URL]): MeasurementResult =
-    super[SubJVMMeasurer].measure(benchmark, classpathURLs)
+  // format: OFF
+  val mode               = Pinpointing
+  val measurementHarness = PinpointHarness
+  // format: ON
 
 }

@@ -15,24 +15,49 @@ import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import java.net.URL
 
-import scala.tools.nsc.io.Path
 import scala.tools.nsc.util.ClassPath
 import scala.tools.sbs.common.Reflection
 import scala.tools.sbs.io.Log
 import scala.tools.sbs.io.LogFactory
-import scala.tools.sbs.util.Constant
 import scala.xml.Elem
 
-import BenchmarkBase.Benchmark
-
 trait BenchmarkBase {
+  self: Configured =>
 
-  import BenchmarkBase.Benchmark
-
-  type subBenchmark     <: Benchmark
-  type subSnippet       <: subBenchmark
-  type subInitializable <: subBenchmark
+  // format: OFF
+  type BenchmarkType    <: Benchmark
+  type subSnippet       <: BenchmarkType
+  type subInitializable <: BenchmarkType
   type subFactory       <: Factory
+  // format: ON
+
+  trait Benchmark {
+
+    /** Information about the benchmark.
+      */
+    val info: BenchmarkInfo
+
+    /** Creates the logging object for each benchmark.
+      */
+    def createLog(mode: Mode): Log
+
+    /** Sets the running context and load benchmark classes.
+      */
+    def init(): Unit
+
+    /** Runs the benchmark object and throws Exceptions (if any).
+      */
+    def run(): Unit
+
+    /** Resets the context.
+      */
+    def reset(): Unit
+
+    /** Class loader
+      */
+    def context: ClassLoader
+
+  }
 
   /** An implement of {@link Benchmark} trait.
     * `method` is the `main(args: Array[String])` method of the benchmark `object`.
@@ -50,8 +75,8 @@ trait BenchmarkBase {
       */
     private val oldContext = Thread.currentThread.getContextClassLoader
 
-    def init()  = Thread.currentThread.setContextClassLoader(context)
-    def run()   = method.invoke(null, Array(info.arguments.toArray: AnyRef): _*)
+    def init() = Thread.currentThread.setContextClassLoader(context)
+    def run() = method.invoke(null, Array(info.arguments.toArray: AnyRef): _*)
     def reset() = Thread.currentThread.setContextClassLoader(oldContext)
 
     def createLog(mode: Mode) = LogFactory(info.name, mode, config)
@@ -89,63 +114,56 @@ trait BenchmarkBase {
   /** Factory object used to create a benchmark entity.
     */
   trait Factory {
-    self: Configured =>
 
-    def createFrom(info: BenchmarkInfo): subBenchmark
+    def expand(info: BenchmarkInfo): Option[BenchmarkType]
 
     /** Creates a `Benchmark` from the given arguments.
       */
-    protected def load(info: BenchmarkInfo,
-                       newSnippet: (Method, ClassLoader) => subSnippet,
-                       newInitializable: ClassLoader => subInitializable,
-                       templateName: String): subBenchmark = {
+    def load(info: BenchmarkInfo,
+             newSnippet: (Method, ClassLoader) => subSnippet,
+             newInitializable: ClassLoader => subInitializable,
+             templateName: String): Option[BenchmarkType] = {
       val classpathURLs = config.classpathURLs ++ info.classpathURLs
       try {
         val clazz = Reflection(config, log).getClass(info.name, classpathURLs)
-        try {
-          val method = clazz.getMethod("main", classOf[Array[String]])
-          if (!Modifier.isStatic(method.getModifiers)) {
-            throw new NoSuchMethodException(info.name + ".main is not static")
-          }
-          log.debug("Snippet benchmark: " + info.name)
-          newSnippet(method, clazz.getClassLoader)
-        }
-        catch {
-          case _: NoSuchMethodException => try {
-            log.debug("Initializable benchmark: " + info.name)
-            newInitializable(clazz.getClassLoader)
-          }
+        val method = clazz.getMethod("main", classOf[Array[String]])
+        if (!Modifier.isStatic(method.getModifiers)) {
+          // throw new NoSuchMethodException(info.name + ".main is not static")
+          log.debug("Initializable benchmark: " + info.name)
+          try { Some(newInitializable(clazz.getClassLoader)) }
           catch {
-            case _: ClassCastException => throw new ClassCastException(
-              info.name + " should implement " + templateName)
-            case _: ClassNotFoundException => throw new ClassNotFoundException(
-              info.name + " should be an object or a class (not trait nor abstract)")
+            case _: ClassCastException =>
+              log.error(info.name + " should extend " + templateName)
+              None
           }
         }
+        log.debug("Snippet benchmark: " + info.name)
+        Some(newSnippet(method, clazz.getClassLoader))
       }
       catch {
         case _: ClassNotFoundException =>
-          throw new ClassNotFoundException(
-            info.name + " classpath = " + ClassPath.fromURLs(classpathURLs: _*))
+          log.error("class not found: " + info.name + " classpath = " + ClassPath.fromURLs(classpathURLs: _*))
+          None
       }
     }
 
     /** Creates a `Benchmark` from a xml element representing it.
       */
-    def createFrom(xml: Elem): subBenchmark =
-      try createFrom(new BenchmarkInfo(xml))
+    def expand(xml: Elem): Option[BenchmarkType] =
+      try expand(new BenchmarkInfo(xml))
       catch {
         case c: ClassCastException => {
           log.error(c.toString)
-          throw c
+          None
         }
         case c: ClassNotFoundException => {
           log.error(c.toString)
-          throw c
+          None
         }
         case e => {
           log.error(e.toString)
-          throw new Exception("Getting benchmark from super process failed")
+          log.debug("Getting benchmark from super process failed")
+          None
         }
       }
 
@@ -153,74 +171,6 @@ trait BenchmarkBase {
 
   /** The concrete factory for each type of benchmarks.
     */
-  def factory(log: Log, config: Config): subFactory
-
-}
-
-object BenchmarkBase extends BenchmarkBase {
-
-  type subBenchmark     = Benchmark
-  type subSnippet       = Snippet
-  type subInitializable = Initializable
-  type subFactory       = Factory
-
-  trait Benchmark {
-
-    /** Information about the benchmark.
-      */
-    val info: BenchmarkInfo
-
-    /** Creates the logging object for each benchmark.
-      */
-    def createLog(mode: Mode): Log
-
-    /** Sets the running context and load benchmark classes.
-      */
-    def init(): Unit
-
-    /** Runs the benchmark object and throws Exceptions (if any).
-      */
-    def run(): Unit
-
-    /** Resets the context.
-      */
-    def reset(): Unit
-
-    /** Class loader
-      */
-    def context: ClassLoader
-
-  }
-
-  private var factory: Option[Factory] = None
-
-  def factory(_log: Log, _config: Config) = factory getOrElse {
-
-    val newFactory = new Factory with Configured {
-
-      val log: Log = _log
-      val config: Config = _config
-
-      def createFrom(info: BenchmarkInfo): Benchmark = load(
-        info,
-        (method: Method, context: ClassLoader) => new Snippet(
-          info,
-          context,
-          method,
-          config
-        ),
-        (context: ClassLoader) => new Initializable(
-          info,
-          context,
-          Reflection(config, log).getObject[Template](info.name, config.classpathURLs ++ info.classpathURLs),
-          config
-        ),
-        classOf[Template].getName)
-
-    }
-
-    factory = Some(newFactory)
-    newFactory
-  }
+  val factory: subFactory
 
 }

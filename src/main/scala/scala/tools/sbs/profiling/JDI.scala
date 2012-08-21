@@ -32,14 +32,14 @@ trait JDI {
 
     val connectorName = "com.sun.jdi.CommandLineLaunch"
 
-    def launch(benchmark: ProfBenchmark.Benchmark): VirtualMachine = {
+    def launch(benchmark: ProfBenchmark#Benchmark): VirtualMachine = {
       val invoker      = JVMInvoker(log, config)
       val classpath    = config.classpathURLs ++ benchmark.info.classpathURLs
       val javaArgument =
         if (benchmark.howToLaunch.isLeft)
-          invoker.asJavaArgument(benchmark.howToLaunch.left.get, benchmark, classpath)
+          invoker.asJavaArgument(benchmark.howToLaunch.left.get, benchmark.info, classpath)
         else
-          invoker.asJavaArgument(benchmark, classpath)
+          invoker.asJavaArgument(benchmark.info, classpath)
 
       log.debug("profile command: " + (javaArgument mkString " "))
 

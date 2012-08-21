@@ -29,9 +29,9 @@ import scala.tools.sbs.performance.PerfBenchmark
 import scala.tools.sbs.util.Constant
 
 trait TwinningDetector {
-  self: Configured =>
+  self: PinpointBenchmark with Configured =>
 
-  def twinningDetect[Detected](benchmark: PerfBenchmark.Benchmark,
+  def twinningDetect[Detected](benchmark: BenchmarkType,
                                measureCurrent: => MeasurementResult,
                                measurePrevious: => MeasurementResult,
                                regressionSuccess: RegressionSuccess => Detected,
@@ -86,12 +86,12 @@ trait TwinningDetector {
     }
   }
 
-  protected def regress(benchmark: PerfBenchmark.Benchmark,
+  protected def regress(benchmark: BenchmarkType,
                         current: MeasurementSuccess,
                         previous: MeasurementSuccess): RegressionResult = {
-    val history = History(benchmark, Pinpointing)
+    val history = History()
     history add previous.series
-    Statistics(config, log) testDifference (benchmark, current.series, history)
+    Statistics(config, log) testDifference (benchmark.info, current.series, history)
   }
 
 }

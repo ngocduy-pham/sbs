@@ -14,7 +14,7 @@ import scala.tools.sbs.performance.Series
 
 import org.scalatest.Spec
 
-class StatisticsSpec extends Spec {
+class StatisticsSpec extends Spec with PerformanceTest {
 
   private var s: Series = _
   private var testS: Series = _
@@ -100,42 +100,42 @@ class StatisticsSpec extends Spec {
 
     it("returns BenchmarkSuccess object if old and new Series are `same same`") {
       statistics = Statistics(testConfig, testLog)
-      val history = History(DummyBenchmark, SteadyState)
+      val history = History()
       history add about1kSeries2
-      var result = statistics.testDifference(DummyBenchmark, about1kSeries1, history)
+      var result = statistics.testDifference(DummyBenchmark.info, about1kSeries1, history)
       assert(result.isInstanceOf[CIRegressionSuccess])
     }
 
     it("returns BenchmarkSuccess object 3 Series are `same same`") {
       statistics = Statistics(testConfig, testLog)
-      val history = History(DummyBenchmark, SteadyState)
+      val history = History()
       history add about1kSeries2
       history add about1kSeries3
-      var result = statistics.testDifference(DummyBenchmark, about1kSeries1, history)
+      var result = statistics.testDifference(DummyBenchmark.info, about1kSeries1, history)
       assert(result.isInstanceOf[ANOVARegressionSuccess])
     }
 
     it("returns BenchmarkFailure object if 3 Series are statistically significant different") {
       statistics = Statistics(testConfig, testLog)
-      val history = History(DummyBenchmark, SteadyState)
+      val history = History()
       history add about1kSeries2
       history add about1kSeries3
-      val result = statistics.testDifference(DummyBenchmark, about5k5Series, history)
+      val result = statistics.testDifference(DummyBenchmark.info, about5k5Series, history)
       assert(result.isInstanceOf[ANOVARegressionFailure])
     }
 
     it("returns BenchmarkFailure object if old and new Series are statistically significant different") {
       statistics = Statistics(testConfig, testLog)
-      val history = History(DummyBenchmark, SteadyState)
+      val history = History()
       history add about1kSeries3
-      val result = statistics.testDifference(DummyBenchmark, about5k5Series, history)
+      val result = statistics.testDifference(DummyBenchmark.info, about5k5Series, history)
       assert(result.isInstanceOf[CIRegressionFailure])
     }
 
     it("raises Exception if history is less than 1") {
-      val history = History(DummyBenchmark, SteadyState)
+      val history = History()
       intercept[Exception] {
-        statistics.testDifference(DummyBenchmark, about1kSeries1, history)
+        statistics.testDifference(DummyBenchmark.info, about1kSeries1, history)
       }
     }
 

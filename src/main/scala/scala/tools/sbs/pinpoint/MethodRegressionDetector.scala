@@ -13,74 +13,81 @@ package pinpoint
 
 import java.net.URL
 
-import scala.tools.nsc.io.Directory
-import scala.tools.sbs.io.Log
 import scala.tools.sbs.performance.CIRegressionFailure
 import scala.tools.sbs.performance.CIRegressionSuccess
 import scala.tools.sbs.performance.MeasurementSuccess
 import scala.tools.sbs.pinpoint.instrumentation.JavaUtility
 import scala.tools.sbs.pinpoint.strategy.InstrumentationRunner
-import scala.tools.sbs.pinpoint.strategy.InstrumentationUtility
-import scala.tools.sbs.pinpoint.strategy.PinpointMeasurerFactory
+import scala.tools.sbs.pinpoint.strategy.SubJVMPinpointMeasurer
 import scala.tools.sbs.pinpoint.strategy.PreviousVersionExploiter
 import scala.tools.sbs.pinpoint.strategy.TwinningDetector
 
-class MethodRegressionDetector(val config: Config,
-                               val log: Log,
-                               val benchmark: PinpointBenchmark.Benchmark,
-                               val instrumentedPath: Directory,
-                               val storagePath: Directory)
-  extends ScrutinyRegressionDetector
-  with TwinningDetector
+trait MethodRegressionDetector
+  extends TwinningDetector
   with InstrumentationRunner
   with PreviousVersionExploiter
-  with InstrumentationUtility
-  with Configured {
-  
-  val className = benchmark.className
-  val methodName = benchmark.methodName
+  with SubJVMPinpointMeasurer {
+  self: PinpointBenchmark with Configured =>
 
-  def detect(stupidDummyNotTobeUsedBenchmark: PinpointBenchmark.Benchmark): ScrutinyRegressionResult = {
-    if (benchmark.className == "" || benchmark.methodName == "") {
-      throw new NoPinpointingMethodException(benchmark)
+  type DetectorType <: Detector
+
+  type MeasurerType = Measurer
+
+  def regressionDetect(benchmark: BenchmarkType): ScrutinyRegressionResult =
+    regressionDetector(benchmark) run
+
+  trait Detector {
+
+    val benchmark: BenchmarkType
+
+    def run(): ScrutinyRegressionResult = {
+      if (benchmark.className == "" || benchmark.methodName == "") {
+        throw new NoPinpointingMethodException(benchmark)
+      }
+
+      log.info("Detecting performance regression of method " + benchmark.className + "." + benchmark.methodName)
+      log.info("")
+
+      twinningDetect(
+        benchmark,
+        measureCurrent,
+        measurePrevious,
+        regressOK => regressOK match {
+          case ci: CIRegressionSuccess => ScrutinyCIRegressionSuccess(ci)
+          case _                       => throw new ANOVAUnsupportedException
+        },
+        regressFailed => regressFailed match {
+          case ci: CIRegressionFailure => (measureCurrent, measurePrevious) match {
+            case (current: MeasurementSuccess, previous: MeasurementSuccess) =>
+              ScrutinyCIRegressionFailure(ci)
+            case _ => throw new AlgorithmFlowException(this.getClass)
+          }
+          case _ => throw new ANOVAUnsupportedException
+        },
+        failure => ScrutinyImmeasurableFailure(benchmark.info.name, failure))
     }
 
-    log.info("Detecting performance regression of method " + benchmark.className + "." + benchmark.methodName)
-    log.info("")
+    private[this] lazy val measureCurrent = measureCommon(config.classpathURLs ++ benchmark.info.classpathURLs)
 
-    twinningDetect(
-      benchmark,
-      measureCurrent,
-      measurePrevious,
-      regressOK => regressOK match {
-        case ci: CIRegressionSuccess => ScrutinyCIRegressionSuccess(ci)
-        case _                       => throw new ANOVAUnsupportedException
-      },
-      regressFailed => regressFailed match {
-        case ci: CIRegressionFailure => (measureCurrent, measurePrevious) match {
-          case (current: MeasurementSuccess, previous: MeasurementSuccess) =>
-            ScrutinyCIRegressionFailure(ci)
-          case _ => throw new AlgorithmFlowException(this.getClass)
-        }
-        case _ => throw new ANOVAUnsupportedException
-      },
-      failure => ScrutinyImmeasurableFailure(benchmark, failure))
+    // format: OFF
+    private[this] lazy val measurePrevious = exploit(benchmark.previous,
+                                                     benchmark.context,
+                                                     config.classpathURLs ++ benchmark.info.classpathURLs,
+                                                     measureCommon)
+
+    private[this] def measureCommon(classpathURLs: List[URL]) =
+      instrumentAndRun(benchmark,
+                       (method, instrumentor) => instrumentor.sandwich(method,
+                                                                       JavaUtility.callPinpointHarnessStart,
+                                                                       JavaUtility.callPinpointHarnessEnd),
+                       classpathURLs,
+                       measurer.measure(benchmark.info, _))
+    // format: ON
+
   }
 
-  private lazy val measureCurrent = measureCommon(config.classpathURLs ++ benchmark.info.classpathURLs)
+  def measurer = new Measurer {}
 
-  private lazy val measurePrevious = exploit(
-    benchmark.previous,
-    benchmark.context,
-    config.classpathURLs ++ benchmark.info.classpathURLs,
-    measureCommon)
-
-  private def measureCommon(classpathURLs: List[URL]) = instrumentAndRun(
-    (method, instrumentor) => instrumentor.sandwich(
-      method,
-      JavaUtility.callPinpointHarnessStart,
-      JavaUtility.callPinpointHarnessEnd),
-    classpathURLs,
-    PinpointMeasurerFactory(config, log).measure(benchmark, _))
+  def regressionDetector(benchmark: BenchmarkType): DetectorType
 
 }
